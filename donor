@@ -1,0 +1,2970 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <script>
+    /* ====== ជំហានតែមួយគត់ដែលត្រូវកែ: ដាក់ URL /exec របស់ Apps Script ក្នុងសញ្ញា " " ខាងក្រោម ====== */
+    var API_URL = "PASTE_YOUR_EXEC_URL_HERE";
+    /* ================================================================================ */
+
+    // Replaces google.script.run (only exists inside Apps Script) with fetch() calls to the Apps Script API.
+    (function () {
+      function runner(ok, bad) {
+        return new Proxy({}, {
+          get: function (_, name) {
+            if (typeof name !== 'string') return undefined;
+            if (name === 'withSuccessHandler') return function (f) { return runner(f, bad); };
+            if (name === 'withFailureHandler') return function (f) { return runner(ok, f); };
+            return function () {
+              var args = Array.prototype.slice.call(arguments);
+              var fail = function (m) { if (bad) bad(new Error(m)); else console.error(m); };
+              if (/PASTE_YOUR/.test(API_URL)) return fail('មិនទាន់ដាក់ API_URL ក្នុង index.html');
+              // text/plain keeps this a "simple" request, so the browser sends no CORS preflight (Apps Script cannot answer one)
+              fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                               body: JSON.stringify({ fn: name, args: args }), redirect: 'follow' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                  if (res && res.error) return fail(res.error);
+                  if (ok) ok(res ? res.result : undefined);
+                }, function (e) { fail('ការតភ្ជាប់បរាជ័យ: ' + e.message); });
+            };
+          }
+        });
+      }
+      window.google = { script: { run: runner(null, null), url: { getLocation: function (cb) { cb({ hash: '' }); } } } };
+    })();
+  </script>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ydv-theme');
+        var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-bs-theme', theme);
+      } catch (e) { /* localStorage unavailable — default to light */ }
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>បឋមសិក្សាយ៉ាដាវ - ប្រព័ន្ធគ្រប់គ្រងថវិកា និងសប្បុរសជន</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  
+  <!-- Google Fonts Khmer -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Moul&family=Siemreap&family=Siemreap&display=swap" rel="stylesheet">
+
+  <style>
+    .school-logo-badge {
+      width: 90px; height: 90px; background: #eef2f5; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); border: 3px solid #1e3c72;
+    }
+    .school-logo-badge-light {
+      width: 70px; height: 70px; background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.2s ease;
+    }
+    .sidebar.sidebar-collapsed .school-logo-badge-light {
+      width: 40px; height: 40px; margin-left: auto; margin-right: auto;
+    }
+    .sidebar.sidebar-collapsed .school-logo-badge-light i {
+      font-size: 1rem !important;
+    }
+    body { font-family: 'Kantumruy Pro', sans-serif; background-color: #f4f6f9; color: #333; }
+    .moul-text { font-family: 'Moul', serif; }
+    
+    @font-face {
+      font-family: 'Khmer OS Siemreab Local';
+      src: local('Khmer OS Siemreab'), local('Siemreab'), local('KhmerOS_siemreab');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    #printable-area, #printable-area table {
+      font-family: 'Siemreab', 'Khmer OS Siemreab Local', 'Khmer OS Siemreab', sans-serif !important;
+    }
+
+    #printable-area table th {
+      font-size: 13px !important;
+      padding: 3px 2px !important;
+      vertical-align: middle !important;
+      line-height: 1.17 !important;
+      font-weight: bold !important;
+      height: 35px;
+    }
+
+    #printable-area table td {
+      font-size: 12px !important;
+      padding: 3px 2px !important;
+      vertical-align: middle !important;
+      line-height: 1.17 !important;
+    }
+    
+    .sidebar { min-height: 100vh; background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%); color: #fff; transition: all 0.2s ease; }
+    .nav-link { color: rgba(255, 255, 255, 0.8); font-size: 1.05rem; padding: 12px 20px; margin: 4px 0; border-radius: 8px; }
+    .nav-link:hover, .nav-link.active { color: #fff; background-color: rgba(255, 255, 255, 0.2); }
+    .main-content { transition: all 0.2s ease; }
+
+    .sidebar-toggle-btn { border-color: rgba(255,255,255,0.4); color: #fff; }
+    .sidebar-toggle-btn:hover { background-color: rgba(255,255,255,0.15); color: #fff; }
+
+    .sidebar.sidebar-collapsed {
+      flex: 0 0 70px !important;
+      max-width: 70px !important;
+      width: 70px !important;
+      padding-left: .4rem !important;
+      padding-right: .4rem !important;
+    }
+    .main-content.main-content-expanded {
+      flex: 0 0 calc(100% - 70px) !important;
+      max-width: calc(100% - 70px) !important;
+    }
+    .sidebar.sidebar-collapsed .sidebar-text,
+    .sidebar.sidebar-collapsed .nav-label {
+      display: none !important;
+    }
+    .sidebar.sidebar-collapsed .nav-link {
+      text-align: center;
+      padding: 12px 2px;
+    }
+    .sidebar.sidebar-collapsed .nav-link i {
+      margin-right: 0 !important;
+    }
+    .sidebar.sidebar-collapsed .sidebar-toggle-row {
+      justify-content: center !important;
+    }
+    .sidebar.sidebar-collapsed #user-display-role,
+    .sidebar.sidebar-collapsed .btn-outline-light .nav-label {
+      display: none !important;
+    }
+    .card-stat { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .card-stat:hover { transform: translateY(-3px); }
+    .logo-img { width: 70px; height: 70px; background-color: #fff; border-radius: 50%; padding: 5px; object-fit: contain; }
+    
+    #login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+    .login-card { width: 100%; max-width: 400px; border-radius: 15px; }
+
+    .media-upload-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .media-upload-item {
+      margin-bottom: 10px;
+    }
+    .media-upload-item:last-child {
+      margin-bottom: 0;
+    }
+    .media-label-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .custom-file-upload-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 10px;
+      transition: all 0.2s ease;
+    }
+    .custom-file-upload-wrapper:hover {
+      border-color: #3b82f6;
+      background: #f1f5f9;
+    }
+    .custom-file-upload-wrapper input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .file-upload-text {
+      font-size: 12px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-grow: 1;
+    }
+    .file-upload-icon-btn {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 2;
+    }
+    .custom-file-upload-wrapper:hover .file-upload-icon-btn {
+      background: #3b82f6;
+      color: #ffffff;
+    }
+
+    .media-upload-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    .media-upload-row .form-select { height: 34px; min-height: 34px; padding-top: .15rem; padding-bottom: .15rem; font-size: 13px; border-radius: 8px; }
+    .letter-group-title {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;
+    }
+    .letter-group-title small { font-weight: 400; color: #64748b; font-size: 12px; }
+    html[data-bs-theme="dark"] .letter-group-title { color: var(--ink); }
+    html[data-bs-theme="dark"] .letter-group-title small { color: var(--ink-soft); }
+    .media-upload-row .media-upload-item { margin-bottom: 0; min-width: 0; }
+    .media-upload-row .media-label-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-upload-controls { display: flex; align-items: stretch; gap: 8px; }
+    .media-upload-controls .custom-file-upload-wrapper { flex: 1 1 auto; min-width: 0; }
+    .media-upload-controls .btn { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+    @media (max-width: 991.98px) {
+      .media-upload-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 575.98px) {
+      .media-upload-row { grid-template-columns: 1fr; }
+    }
+    .custom-file-upload-wrapper .file-upload-icon-btn[data-tint="green"]  { background: #dcfce7; color: #166534; }
+    .custom-file-upload-wrapper .file-upload-icon-btn[data-tint="yellow"] { background: #fef9c3; color: #854d0e; }
+    html[data-bs-theme="dark"] .custom-file-upload-wrapper .file-upload-icon-btn[data-tint="green"]  { background: #14532d; color: #bbf7d0; }
+    html[data-bs-theme="dark"] .custom-file-upload-wrapper .file-upload-icon-btn[data-tint="yellow"] { background: #422006; color: #fde68a; }
+
+    :root {
+      --page-bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --ink: #26313f;
+      --ink-soft: #64748b;
+      --line: #e2e8f0;
+      --brand-1: #1e3c72;
+      --brand-2: #2a5298;
+      --shadow: rgba(0,0,0,0.06);
+    }
+    html[data-bs-theme="dark"] {
+      --page-bg: #0f1521;
+      --surface: #161e2c;
+      --surface-2: #1b2434;
+      --ink: #e6ebf2;
+      --ink-soft: #93a0b4;
+      --line: #2b3a52;
+      --brand-1: #16294d;
+      --brand-2: #1e3c72;
+      --shadow: rgba(0,0,0,0.35);
+
+      color-scheme: dark;
+      --bs-body-bg: var(--page-bg);
+      --bs-body-color: var(--ink);
+    }
+    html[data-bs-theme="dark"] body { background-color: var(--page-bg); color: var(--ink); }
+    html[data-bs-theme="dark"] .card,
+    html[data-bs-theme="dark"] .list-group-item,
+    html[data-bs-theme="dark"] .modal-content,
+    html[data-bs-theme="dark"] table {
+      background-color: var(--surface); color: var(--ink); border-color: var(--line);
+    }
+    html[data-bs-theme="dark"] .table { --bs-table-bg: var(--surface); --bs-table-color: var(--ink); --bs-table-border-color: var(--line); }
+    html[data-bs-theme="dark"] .text-muted { color: var(--ink-soft) !important; }
+    html[data-bs-theme="dark"] .bg-light { background-color: var(--surface-2) !important; color: var(--ink); }
+    html[data-bs-theme="dark"] .border,
+    html[data-bs-theme="dark"] .border-bottom,
+    html[data-bs-theme="dark"] .border-top { border-color: var(--line) !important; }
+    html[data-bs-theme="dark"] .form-control,
+    html[data-bs-theme="dark"] .form-select {
+      background-color: var(--surface-2); color: var(--ink); border-color: var(--line);
+    }
+    html[data-bs-theme="dark"] .form-control::placeholder { color: var(--ink-soft); }
+    html[data-bs-theme="dark"] .form-control:focus,
+    html[data-bs-theme="dark"] .form-select:focus {
+      background-color: var(--surface-2); color: var(--ink);
+    }
+    html[data-bs-theme="dark"] .media-upload-card {
+      background: var(--surface); border-color: var(--line);
+    }
+    html[data-bs-theme="dark"] .media-label-title { color: var(--ink); }
+    html[data-bs-theme="dark"] .custom-file-upload-wrapper {
+      background: var(--surface-2); border-color: var(--line);
+    }
+    html[data-bs-theme="dark"] .custom-file-upload-wrapper:hover { background: var(--line); }
+    html[data-bs-theme="dark"] .file-upload-text { color: var(--ink-soft); }
+    html[data-bs-theme="dark"] .file-upload-icon-btn { background: var(--line); color: var(--ink); }
+    html[data-bs-theme="dark"] .badge.bg-light { background-color: var(--surface-2) !important; color: var(--ink-soft) !important; }
+    html[data-bs-theme="dark"] .btn-outline-primary,
+    html[data-bs-theme="dark"] .btn-outline-secondary,
+    html[data-bs-theme="dark"] .btn-outline-success,
+    html[data-bs-theme="dark"] .btn-outline-danger { color: var(--ink); border-color: var(--line); }
+    html[data-bs-theme="dark"] .btn-outline-primary:hover { background: var(--brand-2); color: #fff; }
+
+    .theme-toggle-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 1px solid var(--line); background: var(--surface-2);
+      color: var(--brand-1); display: flex; align-items: center; justify-content: center;
+      font-size: 13px; cursor: pointer; transition: all .15s ease;
+    }
+    .theme-toggle-btn:hover { background: var(--line); }
+
+    @media print {
+      @page {
+        size: A4 landscape !important;
+        margin: 0 !important;
+      }
+      
+      html, body {
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        font-size: 12pt !important;
+      }
+
+      .no-print, header, nav, .sidebar, .btn, .col-lg-5, .card-body .row .col-lg-5 {
+        display: none !important;
+      }
+
+      .main-content, #printable-area {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+      }
+
+      .print-page {
+        width: 297mm !important;
+        height: 209mm !important;
+        max-height: 209mm !important;
+        padding: 5mm 5mm !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-before: always !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        overflow: hidden !important;
+      }
+
+      .print-page:first-child {
+        page-break-before: avoid !important;
+      }
+
+      .print-page:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-bottom: 0 !important;
+        font-family: 'Siemreab', 'Khmer OS Siemreab Local', 'Khmer OS Siemreab', sans-serif !important;
+      }
+
+      th {
+        font-size: 13px !important;
+        padding: 6px 4px !important;
+        vertical-align: middle !important;
+        line-height: 1.17 !important;
+        font-weight: bold !important;
+      }
+
+      td {
+        font-size: 12px !important;
+        padding: 6px 4px !important;
+        vertical-align: middle !important;
+        line-height: 1.17 !important;
+      }
+
+      .signature-block {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      body.printing-letter #section-letter { display: block !important; margin: 0 !important; padding: 0 !important; }
+      #section-letter > .row { margin: 0 !important; }
+      #section-letter .col-lg-5 { display: none !important; }
+      #section-letter .col-lg-7 { width: 100% !important; max-width: 100% !important; padding: 0 !important; flex: 0 0 100% !important; margin: 0 !important; }
+      #section-letter .card { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; background: transparent !important; }
+      
+      #previewPanelsContainer { display: block !important; overflow: visible !important; max-height: none !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; }
+      
+      #previewPanelsContainer > div { 
+        display: block !important; 
+        border: none !important; 
+        background: transparent !important; 
+        box-shadow: none !important; 
+        padding: 0 !important; 
+        margin: 0 !important; 
+        width: 297mm !important;
+        height: 210mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+      }
+      #previewPanelsContainer > div:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      #previewPanelsContainer .no-print { display: none !important; }
+      
+      .preview-wrapper { 
+        display: block !important; 
+        width: 297mm !important; 
+        height: 210mm !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        overflow: hidden !important; 
+      }
+      
+      .certificate-box {
+        box-shadow: none !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        transform: none !important;
+        margin: 0 !important;
+        padding: 7mm !important;
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+        break-after: auto !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        position: relative !important;
+        left: 0 !important;
+        top: 0 !important;
+      }
+    }
+
+    #section-letter { font-family: 'Siemreab', sans-serif; }
+
+    #section-letter .certificate-box {
+      width: 297mm;
+      height: 210mm;
+      background-color: #ffffff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      position: relative;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      padding: 5mm;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    #section-letter .default-frame-outer {
+      padding: 4px;
+      border: 5px solid #b8860b;
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+
+    #section-letter .default-frame-middle {
+      border: 1.5px solid #daa520;
+      padding: 3px;
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+
+    #section-letter .inner-content {
+      padding: 25mm 25mm;
+      text-align: center;
+      height: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    #section-letter .has-default-border { border: 4px double #b8860b; }
+
+    #section-letter .center-bg-image {
+      position: absolute; top: 55%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 70%; max-height: 70%;
+      object-fit: contain; pointer-events: none;
+      z-index: 10; display: none;
+    }
+
+    #section-letter .bottom-bg-image {
+      position: absolute; 
+      left: 15%;
+      top:23%;
+      width: 10%; max-height: 35%;
+      opacity: 0.7;
+      object-fit: contain; pointer-events: none;
+      z-index: 15; display: none;
+    }
+
+    #section-letter .custom-frame-img {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: fill; pointer-events: none;
+      z-index: 20; display: none;
+    }
+
+    #section-letter .content-layer {
+      position: relative; z-index: 30;
+      height: 100%; display: flex;
+      flex-direction: column; justify-content: space-between;
+    }
+
+    #section-letter .certificate-box.custom-frame .default-frame-outer,
+    #section-letter .certificate-box.custom-frame .default-frame-middle {
+      border: none !important;
+      padding: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
+    }
+
+    #section-letter .certificate-box.custom-frame .inner-content {
+      border: none !important;
+      padding: 20mm 25mm !important;
+      height: 100% !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    #section-letter .header-country {
+      font-family: 'Moul', serif; color: #1a237e;
+      font-size: 18pt; line-height: 1.4;
+      margin-top: 30pt; margin-bottom: 8pt;
+    }
+
+    #section-letter .header-country-sub { font-size: 16pt; }
+
+    #section-letter .cert-title {
+      font-family: 'Moul', serif; color: #b82810;
+      font-size: 18pt; line-height: 1.4; margin-bottom: 5pt;
+    }
+
+    #section-letter .cert-subtitle {
+      font-family: 'Moul', serif; color: #b8860b;
+      font-size: 16pt; line-height: 1.2;
+    }
+
+    #section-letter .cert-action {
+      font-family: 'Moul', serif; color: #1a237e;
+      font-size: 15pt; line-height: 1.2; margin-top: 5pt;
+      padding-left:5pt;
+    }
+
+    #section-letter .cert-name {
+      font-family: 'Moul', serif; color: #b82810;
+      font-size: 16pt; line-height: 1.2; margin: 8pt 0;
+    }
+
+    #section-letter .cert-content {
+      font-size: 13.5pt; line-height: 1.8; color: #111;
+      text-align: justify; text-indent: 45px; margin: 5pt 0;
+    }
+
+    #section-letter .highlight-text { font-weight: bold; }
+
+    #section-letter .cert-footer {
+      display: flex; justify-content: space-between;
+      align-items: flex-end; font-size: 12pt; margin-bottom: 10pt;
+    }
+
+    #section-letter .footer-left { text-align: left; line-height: 1.6; width: 45%; }
+    #section-letter .footer-right { text-align: center; line-height: 1.6; width: 55%; }
+    #section-letter .signature-space { height: 45px; }
+    #section-letter .signatory-name { font-family: 'Moul', serif; font-size: 12pt; color: #1a237e; }
+    #section-letter .signatory-name-main { font-family: 'Moul', serif; font-size: 12pt; color: #1a237e; }
+
+    #importCard .sheet-map-table td, #importCard .sheet-map-table th { font-size: 13px; vertical-align: middle; }
+    #importCard .sheet-map-table select { min-width: 190px; }
+    #importCard .field-badge { font-weight: 400; margin: 1px 3px 1px 0; }
+  
+    /* ===== Phone / Telegram layout ===== */
+    .tg-logout-btn { display: none; }
+    @media screen and (max-width: 767.98px) {
+      body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+      #app-sidebar { position: fixed !important; left: 0; right: 0; bottom: 0; top: auto; width: 100% !important; max-width: 100% !important;
+        min-height: 0 !important; z-index: 1030; padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)) !important; }
+      #app-sidebar .sidebar-toggle-row, #app-sidebar .text-center, #app-sidebar hr, #app-sidebar > button { display: none !important; }
+      #app-sidebar .nav { flex-direction: row !important; flex-wrap: nowrap; }
+      #app-sidebar .nav-item { flex: 1 1 0; min-width: 0; }
+      #app-sidebar .nav-link { display: flex !important; flex-direction: column; align-items: center; padding: 6px 2px !important; font-size: 11px; }
+      #app-sidebar .nav-link i { margin: 0 0 2px 0 !important; font-size: 18px; }
+      #app-sidebar .nav-label { display: block !important; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .main-content { padding: 12px !important; margin-left: 0 !important; width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }
+      .main-content > .d-flex.justify-content-between { flex-wrap: wrap; gap: 8px; }
+      .main-content table { display: block; overflow-x: auto; white-space: nowrap; }
+      .tg-logout-btn { display: inline-flex; align-items: center; }
+    }
+
+    /* ===== Telegram-style polish ===== */
+    :root { --brand-grad: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 65%, #3b6fc4 100%); --amt: #2a5298; }
+    html[data-bs-theme="dark"] { --amt: #8fb8ff; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; }
+    .btn, .nav-link { touch-action: manipulation; }
+    .card { border: 0; border-radius: 16px; box-shadow: 0 2px 14px var(--shadow); }
+    .card-header { border-radius: 16px 16px 0 0 !important; }
+    .btn { border-radius: 12px; font-weight: 600; }
+    .form-control, .form-select { border-radius: 12px; min-height: 46px; font-size: 16px; }
+    .form-label { font-weight: 600; }
+    .swal2-popup { font-family: inherit !important; border-radius: 20px !important; }
+    .login-card { border-radius: 24px !important; box-shadow: 0 18px 50px rgba(8,20,50,.35) !important; }
+    .login-card .btn-primary { background: var(--brand-grad); border: 0; min-height: 48px; }
+    html[data-bs-theme="dark"] .bg-white { background-color: var(--surface) !important; }
+    html[data-bs-theme="dark"] .card-header { background-color: var(--surface-2) !important; border-color: var(--line); }
+    html[data-bs-theme="dark"] .table-light { --bs-table-bg: var(--surface-2); --bs-table-color: var(--ink); }
+    @media (prefers-reduced-motion: no-preference) {
+      #section-dashboard, #section-form, #section-report, #section-letter { animation: tgUp .28s ease both; }
+      @keyframes tgUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    }
+    @media screen and (max-width: 767.98px) {
+      body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+      #login-page { padding: 16px; }
+      /* hero header */
+      .main-content { padding: 0 12px 12px !important; }
+      .main-content > .d-flex.justify-content-between { margin: 0 -12px 14px; padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 18px;
+        background: var(--brand-grad); border: 0 !important; border-radius: 0 0 26px 26px; box-shadow: 0 8px 24px rgba(30,60,114,.28); }
+      .main-content > .d-flex.justify-content-between h4 { color: #fff !important; font-size: 1.05rem; margin: 0; }
+      .main-content > .d-flex.justify-content-between .text-muted { color: rgba(255,255,255,.78) !important; font-size: .75rem; }
+      .main-content > .d-flex.justify-content-between > .d-flex { width: 100%; gap: 8px !important; }
+      #user-display-name { color: #fff !important; font-size: .82rem; margin-right: auto; max-width: 48vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .theme-toggle-btn, .main-content > .d-flex > .d-flex .btn-outline-primary, .tg-logout-btn {
+        background: rgba(255,255,255,.16) !important; border: 1px solid rgba(255,255,255,.32) !important; color: #fff !important; }
+      .main-content > .d-flex > .d-flex .btn-outline-primary { font-size: 0; padding: 6px 11px; }
+      .main-content > .d-flex > .d-flex .btn-outline-primary i { font-size: 14px; margin: 0 !important; }
+      /* stat cards: two per row */
+      #section-dashboard > .row { --bs-gutter-x: .6rem; --bs-gutter-y: .6rem; }
+      #section-dashboard > .row > [class*="col-md-3"] { flex: 0 0 50%; width: 50%; max-width: 50%; }
+      .card-stat { padding: 12px !important; }
+      .card-stat h4 { font-size: 1.05rem; } .card-stat h6 { font-size: .85rem; }
+      .card-stat .fw-bold { font-size: .8rem; word-break: break-word; }
+      #section-dashboard > h5 { font-size: 1rem; }
+      /* recent donors: table rows become cards */
+      #section-dashboard > .card.shadow-sm { background: transparent !important; box-shadow: none; }
+      #section-dashboard > .card.shadow-sm .card-header { background: transparent !important; padding: 0 2px 8px !important; border: 0; }
+      #section-dashboard .table-responsive { overflow: visible; }
+      #section-dashboard table { display: table !important; white-space: normal !important; background: transparent !important; }
+      #section-dashboard thead { display: none; }
+      #recent-table-body { display: block; }
+      #recent-table-body tr { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; padding: 12px 14px; margin: 0 0 10px;
+        background: var(--surface); border-radius: 14px; box-shadow: 0 1px 8px var(--shadow); }
+      #recent-table-body td { display: block; border: 0 !important; padding: 0 !important; background: transparent !important; box-shadow: none !important; }
+      #recent-table-body td:nth-child(2) { order: 1; flex: 1 1 60%; font-size: 1rem; }
+      #recent-table-body td:nth-child(6) { order: 2; margin-left: auto; }
+      #recent-table-body td:nth-child(1) { order: 3; font-size: .75rem; color: var(--ink-soft); }
+      #recent-table-body td:nth-child(3) { order: 4; }
+      #recent-table-body td:nth-child(4) { order: 5; font-size: .75rem; color: var(--ink-soft); }
+      #recent-table-body td:nth-child(5) { order: 6; flex: 0 0 100%; margin-top: 4px; font-weight: 700; color: var(--amt); }
+      /* floating bottom tab bar */
+      #app-sidebar { left: 10px !important; right: 10px !important; bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important; width: auto !important;
+        border-radius: 22px; background: var(--surface) !important; color: var(--ink); border: 1px solid var(--line);
+        box-shadow: 0 8px 30px rgba(10,25,60,.28); padding: 6px !important; backdrop-filter: blur(14px); }
+      #app-sidebar .nav-link { color: var(--ink-soft) !important; border-radius: 16px; transition: background .2s, color .2s; }
+      #app-sidebar .nav-link.active { background: var(--brand-grad) !important; color: #fff !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SECTION LOGIN -->
+<div id="login-page">
+  <div class="card login-card shadow-lg border-0 p-4 bg-white">
+    <div class="text-center mb-3">
+      <img src="https://cdn-icons-png.flaticon.com/512/167/167707.png" alt="Logo" class="logo-img mb-2 shadow">
+      <h5 class="moul-text text-primary">បឋមសិក្សាយ៉ាដាវ</h5>
+      <p class="text-muted small mb-1">ចូលប្រព័ន្ធគ្រប់គ្រងថវិកា & សប្បុរសជន</p>
+
+    </div>
+    <form id="loginForm">
+      <div class="mb-3">
+        <label class="form-label fw-bold small">ឈ្មោះគណនី (Username)</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+          <input type="text" id="login-username" class="form-control" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" placeholder="បញ្ចូល Username" required>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-bold small">លេខសម្ងាត់ (Password)</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+          <input type="password" id="login-password" class="form-control" autocomplete="current-password" placeholder="បញ្ចូល Password" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+        <i class="fa-solid fa-right-to-bracket me-2"></i>ចូលប្រព័ន្ធ (Login)
+      </button>
+    </form>
+      <div id="ver-tag" class="text-center text-muted mt-3" style="font-size:11px"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-container" class="container-fluid" style="display: none;">
+  <div class="row">
+    
+    <!-- Sidebar / Left Navigation -->
+    <div class="col-md-3 col-lg-2 sidebar p-3 no-print" id="app-sidebar">
+      <div class="d-flex justify-content-end sidebar-toggle-row mb-1">
+        <button class="btn btn-sm btn-outline-light sidebar-toggle-btn" type="button" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="បង្រួម/ពង្រីក Sidebar">
+          <i class="fa-solid fa-angles-left" id="sidebar-toggle-icon"></i>
+        </button>
+      </div>
+      <div class="text-center my-2">
+       <div class="school-logo-badge-light mx-auto mb-2">
+          <i class="fa-solid fa-school fa-2x text-warning"></i>
+        </div>
+        <div class="sidebar-text">
+          <h6 class="moul-text mt-2 text-warning fs-6">បឋមសិក្សាយ៉ាដាវ</h6>
+          <p class="small text-light mb-1">ប្រព័ន្ធគ្រប់គ្រងថវិកា & សប្បុរសជន</p>
+          <span class="badge bg-light text-dark mb-2" id="user-display-role">Role</span>
+        </div>
+      </div>
+      <hr class="bg-light">
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" id="btn-dashboard" onclick="switchTab('dashboard')" title="Dashboard">
+            <i class="fa-solid fa-chart-line me-2"></i><span class="nav-label"> Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="btn-form" onclick="switchTab('form')" title="បញ្ចូលទិន្នន័យ">
+            <i class="fa-solid fa-pen-to-square me-2"></i><span class="nav-label"> បញ្ចូលទិន្នន័យ</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="btn-report" onclick="switchTab('report')" title="របាយការណ៍ & បោះពុម្ព">
+            <i class="fa-solid fa-file-invoice me-2"></i><span class="nav-label"> របាយការណ៍ & បោះពុម្ព</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="btn-letter" onclick="switchTab('letter')" title="លិខិតថ្លែងអំណរគុណ">
+            <i class="fa-solid fa-certificate me-2"></i><span class="nav-label"> លិខិតថ្លែងអំណរគុណ</span>
+          </a>
+        </li>
+      </ul>
+      <hr class="bg-light mt-auto">
+      <button class="btn btn-outline-light w-100 btn-sm mt-3" onclick="logout()" title="ចាកចេញ (Logout)">
+        <i class="fa-solid fa-right-from-bracket me-2"></i><span class="nav-label">ចាកចេញ (Logout)</span>
+      </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="col-md-9 col-lg-10 p-4 main-content">
+      
+      <!-- Top Header (No Print) -->
+      <div class="d-flex justify-content-between align-items-center mb-4 no-print pb-2 border-bottom">
+        <div>
+          <h4 class="moul-text text-primary mb-1">សាលាបឋមសិក្សាយ៉ាដាវ</h4>
+          <span class="text-muted small">ឃុំលំជ័រ ស្រុកអូរយ៉ាដាវ ខេត្តរតនគិរី</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="fw-bold text-secondary" id="user-display-name"><i class="fa-solid fa-user-circle me-1"></i> User</span>
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="ប្តូររបៀបបង្ហាញ (Dark / Light)">
+            <i class="fa-solid fa-moon" id="themeToggleIcon"></i>
+          </button>
+          <button class="btn btn-outline-primary btn-sm" onclick="loadAllData()">
+            <i class="fa-solid fa-rotate me-1"></i> អាប់ដេតទិន្នន័យ (Refresh)
+          </button>
+          <button class="btn btn-outline-danger btn-sm tg-logout-btn" onclick="logout()" title="ចាកចេញ"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: DASHBOARD -->
+      <div id="section-dashboard">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-gauge me-2"></i>ផ្ទាំងសង្ខេបទិន្នន័យ (Dashboard)</h5>
+        
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3 border-start border-4 border-primary">
+              <span class="text-muted small">ថវិកាសរុប (រៀល)</span>
+              <h4 class="fw-bold text-center mb-0" id="stat-total-riel">0 ៛</h4>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3 border-start border-4 border-success">
+              <span class="text-muted small">ថវិកាសរុប (ដុល្លារ)</span>
+              <h4 class="fw-bold text-center mb-0" id="stat-total-usd">$0.00</h4>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3 border-start border-4 border-warning">
+              <span class="text-muted small">តម្លៃសម្ភារឧបត្ថម្ភសរុប</span>
+              <h6 class="fw-bold text-center mb-0" id="stat-material-val">0 ៛ / $0.00</h6>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3 border-start border-4 border-info">
+              <span class="text-muted small">ចំនួនសប្បុរសជនសរុប</span>
+              <h4 class="fw-bold text-center mb-0" id="stat-total-donors">0 នាក់</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3">
+              <span class="text-muted small"><i class="fa-solid fa-users me-1 text-center"></i> សហគមន៍</span>
+              <div class="fw-bold" id="stat-source-community">0 នាក់ | 0 ៛ / $0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3">
+              <span class="text-muted small"><i class="fa-solid fa-user-tie me-1 text-success"></i> មាតាបិតា</span>
+              <div class="fw-bold" id="stat-source-parents">0 នាក់ | 0 ៛ / $0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3">
+              <span class="text-muted small"><i class="fa-solid fa-school me-1 text-warning"></i> គណៈកម្មការថ្នាក់</span>
+              <div class="fw-bold" id="stat-source-committee">0 នាក់ | 0 ៛ / $0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat bg-white p-3">
+              <span class="text-muted small"><i class="fa-solid fa-hand-holding-heart me-1 text-danger"></i> សប្បុរសជនខាងក្រៅ</span>
+              <div class="fw-bold" id="stat-source-external">0 នាក់ | 0 ៛ / $0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white fw-bold py-3">
+            <i class="fa-solid fa-list me-2"></i> បញ្ជីទិន្នន័យថ្មីៗ (៥ - ១០ នាក់ចុងក្រោយ)
+          </div>
+          <div class="card-body p-0 table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>កាលបរិច្ឆេទ</th>
+                  <th>ឈ្មោះសប្បុរសជន</th>
+                  <th>ប្រភព</th>
+                  <th>ប្រភេទជំនួយ</th>
+                  <th>ថវិកា/សម្ភារ</th>
+                  <th>សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="recent-table-body">
+                <tr><td colspan="6" class="text-center py-3">កំពុងទាញយកទិន្នន័យ...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: INPUT FORM -->
+      <div id="section-form" style="display: none;">
+        <div class="card border-0 shadow-sm max-w-800 mx-auto">
+          <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 text-white"><i class="fa-solid fa-pen-to-square me-2"></i>ទម្រង់បញ្ចូល / កែប្រែទិន្នន័យសប្បុរសជន</h5>
+          </div>
+          <div class="card-body p-4">
+            <form id="donorForm">
+              <input type="hidden" id="edit-id" name="id">
+              
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">កាលបរិច្ឆេទ <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">ឈ្មោះសប្បុរសជន/អ្នកឧបត្ថម្ភ <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="name" name="name" placeholder="បញ្ចូលឈ្មោះ..." required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">ប្រភពជំនួយ <span class="text-danger">*</span></label>
+                  <select class="form-select" id="source" name="source" required>
+                    <option value="">-- ជ្រើសរើសប្រភព --</option>
+                    <option value="សហគមន៍">សហគមន៍</option>
+                    <option value="មាតាបិតា">មាតាបិតា</option>
+                    <option value="គណៈកម្មការថ្នាក់រៀន">គណៈកម្មការថ្នាក់រៀន</option>
+                    <option value="សប្បុរសជនខាងក្រៅ">សប្បុរសជនខាងក្រៅ</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">ប្រភេទជំនួយ <span class="text-danger">*</span></label>
+                  <select class="form-select" id="helpTypeFromSheet" name="helpTypeFromSheet" required>
+                    <option value="">-- កំពុងទាញយក... --</option>
+                  </select>
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label fw-bold">ទម្រង់នៃជំនួយ <span class="text-danger">*</span></label>
+                  <select class="form-select" id="type" name="type" onchange="toggleHelpTypeFields()" required>
+                    <option value="">-- ជ្រើសរើស --</option>
+                    <option value="សាច់ប្រាក់">សាច់ប្រាក់</option>
+                    <option value="សម្ភារ">សម្ភារ</option>
+                    <option value="ទាំងពីរ">ទាំងពីរ (សាច់ប្រាក់ និង សម្ភារ)</option>
+                  </select>
+                </div>
+
+                <div id="cash-fields" class="col-12 p-3 bg-light rounded border" style="display: none;">
+                  <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-money-bill-wave me-2"></i>ព័ត៌មានថវិកា (សាច់ប្រាក់)</h6>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">ចំនួនទឹកប្រាក់ (រៀល)</label>
+                      <input type="number" class="form-control" id="amountRiel" name="amountRiel" placeholder="0" min="0">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">ចំនួនទឹកប្រាក់ (ដុល្លារ)</label>
+                      <input type="number" step="0.01" class="form-control" id="amountUsd" name="amountUsd" placeholder="0.00" min="0">
+                    </div>
+                  </div>
+                </div>
+
+                <div id="material-fields" class="col-12 p-3 bg-light rounded border" style="display: none;">
+                  <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-box-open me-2"></i>ព័ត៌មានជំនួយជាសម្ភារ</h6>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">ឈ្មោះសម្ភារ<span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="itemName" name="itemName" placeholder="ឧ. ស៊ីម៉ង់ត៍, តុ, កុំព្យូទ័រ" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">បរិមាណ/ចំនួន<span class="text-danger">*</span></label>
+                      <input type="number" class="form-control" id="itemQty" name="itemQty" placeholder="0" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">ឯកត្តា<span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="itemUnit" name="itemUnit" placeholder="ឧ. បាវ, គ្រឿង, ក្បាល" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">តម្លៃប៉ាន់ស្មាន (រៀល)</label>
+                      <input type="number" class="form-control" id="itemValueRiel" name="itemValueRiel" placeholder="0">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">តម្លៃប៉ាន់ស្មាន (ដុល្លារ)</label>
+                      <input type="number" step="0.01" class="form-control" id="itemValueUsd" name="itemValueUsd" placeholder="0.00">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">លេខទូរស័ព្ទ</label>
+                  <input type="tel" class="form-control" id="phone" name="phone" placeholder="012345678">
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label fw-bold">កំណត់សម្គាល់</label>
+                  <textarea class="form-control" id="note" name="note" rows="2" placeholder="ព័ត៌មានបន្ថែម..."></textarea>
+                </div>
+              </div>
+
+              <div class="mt-4 d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-secondary px-4" onclick="resetForm()">
+                  <i class="fa-solid fa-eraser me-1"></i> សម្អាត (Clear)
+                </button>
+                <button type="submit" class="btn btn-primary px-4" id="btn-save">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> រក្សាទុក (Save)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: REPORTS & PRINT -->
+      <div id="section-report" style="display: none;">
+        <div class="card border-0 shadow-sm mb-4 no-print">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">ជ្រើសរើសឆ្នាំ</label>
+                <select class="form-select form-select-sm" id="filter-year" onchange="applyReportFilter()">
+                  <option value="">-- គ្រប់ឆ្នាំ --</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">ជ្រើសរើសឆមាស</label>
+                <select class="form-select form-select-sm" id="filter-semester" onchange="applyReportFilter()">
+                  <option value="">-- គ្រប់ឆមាស --</option>
+                  <option value="1">ឆមាសទី ១</option>
+                  <option value="2">ឆមាសទី ២</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">ជ្រើសរើសខែ</label>
+                <select class="form-select form-select-sm" id="filter-month" onchange="applyReportFilter()">
+                  <option value="">-- គ្រប់ខែ --</option>
+                  <option value="01">មករា</option>
+                  <option value="02">កុម្ភៈ</option>
+                  <option value="03">មីនា</option>
+                  <option value="04">មេសា</option>
+                  <option value="05">ឧសភា</option>
+                  <option value="06">មិថុនា</option>
+                  <option value="07">កក្កដា</option>
+                  <option value="08">សីហា</option>
+                  <option value="09">កញ្ញា</option>
+                  <option value="10">តុលា</option>
+                  <option value="11">វិច្ឆិកា</option>
+                  <option value="12">ធ្នូ</option>
+                </select>
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-success btn-sm w-100" onclick="window.print()">
+                  <i class="fa-solid fa-print me-1"></i> បោះពុម្ពរបាយការណ៍ (Print)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="printable-area" class="bg-white p-4 rounded shadow-sm">
+          <!-- Rendered dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- SECTION 4: លិខិតថ្លែងអំណរគុណ -->
+      <div id="section-letter" style="display: none;">
+
+        <div class="card border-0 shadow-sm p-3 mb-3 no-print" id="importCard" style="border-top: 3px solid #0d6efd;">
+          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <h5 class="moul-text text-primary fs-6 mb-0"><i class="fa-solid fa-file-import me-2"></i>នាំចូលឯកសារ និងទាញទិន្នន័យពី Sheet តាមប្រភេទលិខិត</h5>
+            <span class="badge bg-light text-secondary border">Sheet មួយ = ប្រភេទលិខិតមួយ</span>
+          </div>
+
+          <div class="row g-2 align-items-center">
+            <div class="col-lg-6">
+              <div class="custom-file-upload-wrapper w-100">
+                <i class="fa-solid fa-file-excel text-success me-2"></i>
+                <span class="file-upload-text" id="importFileName">ជ្រើសរើសឯកសារ Excel / CSV (.xlsx .xls .csv)...</span>
+                <button type="button" class="file-upload-icon-btn"><i class="fa-solid fa-folder-open"></i> ស្វែងរក</button>
+                <input type="file" id="importFile" accept=".xlsx,.xls,.csv" onchange="handleImportFile(this)">
+              </div>
+            </div>
+            <div class="col-lg-6 d-flex flex-wrap gap-2">
+              <button class="btn btn-outline-primary btn-sm" type="button" id="btnPullGSheet" onclick="pullFromGoogleSheets()"><i class="fa-brands fa-google-drive me-1"></i> ទាញពី Google Sheet</button>
+              <button class="btn btn-outline-success btn-sm" type="button" onclick="downloadImportTemplate()"><i class="fa-solid fa-download me-1"></i> ទាញយកគំរូ Excel</button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" onclick="addSampleRecord()"><i class="fa-solid fa-flask me-1"></i> ទិន្នន័យគំរូ (ប្រភេទនេះ)</button>
+            </div>
+          </div>
+
+          <div id="pendingSheetsBox" class="mt-3" style="display: none;"></div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-3 mb-3 no-print" style="border-top: 3px solid #f0ad4e;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="moul-text text-primary fs-6 mb-0"><i class="fa-solid fa-file-pen me-2"></i>កែប្រែទម្រង់លិខិតទូទៅ</h5>
+          </div>
+
+          <div class="letter-group-title"><i class="fa-solid fa-layer-group text-primary"></i> ទូទៅ <small>ប្រើដូចគ្នាលើលិខិតទាំងអស់</small></div>
+          <div class="media-upload-card media-upload-row mb-0">
+            <div class="media-upload-item">
+              <div class="media-label-title"><i class="fa-solid fa-file-lines text-danger"></i> ប្រភេទលិខិត</div>
+              <select id="contentTypeSelect" class="form-select" onchange="changeContentPreset(this.value)">
+                <option value="appreciation">លិខិតថ្លែងអំណរគុណ</option>
+                <option value="commendation">លិខិតសរសើរ</option>
+                <option value="honor">លិខិតកិត្តិយស</option>
+              </select>
+            </div>
+              <div class="media-upload-item">
+                <div class="media-label-title"><i class="fa-solid fa-border-all text-primary"></i> រូបភាព Frame (PNG/JPG)</div>
+                <div class="media-upload-controls">
+                  <div class="custom-file-upload-wrapper w-100">
+                    <i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i>
+                    <span class="file-upload-text" id="frameFileName">ជ្រើសរើសឯកសារ Frame...</span>
+                    <button type="button" class="file-upload-icon-btn"><i class="fa-solid fa-folder-open"></i><span class="d-none d-xxl-inline"> ស្វែងរក</span></button>
+                    <input type="file" id="frameUploader" accept="image/*" onchange="updateFileNameDisplay('frameUploader', 'frameFileName')">
+                  </div>
+                  <button class="btn btn-outline-danger btn-sm px-2" type="button" onclick="resetFrame()" title="លុប Frame"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              </div>
+
+              <div class="media-upload-item">
+                <div class="media-label-title"><i class="fa-solid fa-image text-success"></i> Background ចំកណ្តាល</div>
+                <div class="media-upload-controls">
+                  <div class="custom-file-upload-wrapper w-100">
+                    <i class="fa-solid fa-cloud-arrow-up text-success me-2"></i>
+                    <span class="file-upload-text" id="bgFileName">ជ្រើសរើសឯកសារ Background...</span>
+                    <button type="button" class="file-upload-icon-btn" data-tint="green"><i class="fa-solid fa-folder-open"></i><span class="d-none d-xxl-inline"> ស្វែងរក</span></button>
+                    <input type="file" id="bgUploader" accept="image/*" onchange="updateFileNameDisplay('bgUploader', 'bgFileName')">
+                  </div>
+                  <button class="btn btn-outline-danger btn-sm px-2" type="button" onclick="resetCenterBg()" title="លុប Background ចំកណ្តាល"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              </div>
+
+              <div class="media-upload-item">
+                <div class="media-label-title"><i class="fa-solid fa-layer-group text-warning"></i> Background ផ្នែកខាងក្រោម</div>
+                <div class="media-upload-controls">
+                  <div class="custom-file-upload-wrapper w-100">
+                    <i class="fa-solid fa-cloud-arrow-up text-warning me-2"></i>
+                    <span class="file-upload-text" id="bottomBgFileName">ជ្រើសរើសឯកសារផ្នែកខាងក្រោម...</span>
+                    <button type="button" class="file-upload-icon-btn" data-tint="yellow"><i class="fa-solid fa-folder-open"></i><span class="d-none d-xxl-inline"> ស្វែងរក</span></button>
+                    <input type="file" id="bottomBgUploader" accept="image/*" onchange="updateFileNameDisplay('bottomBgUploader', 'bottomBgFileName')">
+                  </div>
+                  <button class="btn btn-outline-danger btn-sm px-2" type="button" onclick="resetBottomBg()" title="លុប Background ផ្នែកខាងក្រោម"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              </div>
+          </div>
+
+          <div class="letter-group-title mt-3"><i class="fa-solid fa-pen-to-square text-success"></i> តម្លៃលំនាំដើម <small>លិខិតនីមួយៗអាចកែផ្ទាល់ខ្លួនបាន តាមប៊ូតុង «កែប្រែ»</small></div>
+          <div class="row g-2">
+            <div class="col-md-6 col-lg-3">
+              <label class="form-label small fw-bold">ឈ្មោះសាលា</label>
+              <input type="text" id="inSchool" class="form-control form-control-sm" value="យ៉ាដាវ" oninput="updateDatesFromPicker(); updateAllLetterPreviews();">
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <label class="form-label small fw-bold">លេខចុះបញ្ជី</label>
+              <input type="text" id="inRegNo" class="form-control form-control-sm" value="......." oninput="updateAllLetterPreviews()">
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <label class="form-label small fw-bold">អ្នកចុះហត្ថលេខា</label>
+              <input type="text" id="inSignatory" class="form-control form-control-sm" value="សំ ស៊ឺរ៉ាបុង" oninput="updateAllLetterPreviews()">
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <label class="form-label small fw-bold">កាលបរិច្ឆេទ</label>
+              <input type="date" id="solarDatePicker" class="form-control form-control-sm" onchange="updateDatesFromPicker(); updateAllLetterPreviews();">
+            </div>
+            <input type="hidden" id="inLunarDate">
+            <input type="hidden" id="inSolarDate">
+          </div>
+
+          <button class="btn btn-warning text-dark fw-bold w-100 py-2 mt-3" onclick="printLetterSection()">
+            <i class="fa-solid fa-print me-2"></i> បោះពុម្ពលិខិតទាំងអស់ដែលបានជ្រើសរើស
+          </button>
+        </div>
+
+        <div class="row g-3">
+
+          <div class="col-lg-5 no-print">
+            <div class="card border-0 shadow-sm p-3">
+              <h5 class="moul-text text-primary fs-6 mb-3"><i class="fa-solid fa-users-rectangle me-2"></i>ជ្រើសរើសសប្បុរសជន & កែប្រែដោយដៃ</h5>
+
+              <div class="mb-2">
+                <input type="text" id="donorSearchInput" class="form-control form-control-sm" placeholder="ស្វែងរកឈ្មោះសប្បុរសជន..." oninput="filterDonorCheckboxList()">
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="selectAllDonors" onclick="toggleSelectAllDonors(this)">
+                  <label class="form-check-label small fw-bold" for="selectAllDonors">ជ្រើសរើសទាំងអស់</label>
+                </div>
+                <span class="badge bg-primary" id="selectedCountBadge">បានជ្រើសរើស: 0</span>
+              </div>
+
+              <div id="donorCheckboxList" class="border rounded p-2 bg-light" style="max-height: 460px; overflow-y: auto;">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-3">
+              <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+                <h5 class="moul-text text-primary fs-6 mb-0"><i class="fa-solid fa-eye me-2"></i>ផ្ទាំងមើលជាមុន (Preview Panels)</h5>
+                <span class="badge bg-secondary" id="previewCountBadge">0 លិខិត</span>
+              </div>
+              <div id="previewPanelsContainer" class="d-flex flex-column gap-4 align-items-center" style="max-height: 80vh; overflow-y: auto; padding: 10px;">
+                <div class="text-muted text-center py-5">
+                  <i class="fa-solid fa-certificate fa-3x mb-2 text-secondary"></i>
+                  <p>មិនទាន់មានលិខិតសម្រាប់បង្ហាញឡើយ សូមជ្រើសរើសសប្បុរសជន</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+  let sessionToken = '';
+  const UI_BUILD = 'u8';
+  const SERVER_BUILD = 'github';
+  (function showVersion() {
+    var v = document.getElementById('ver-tag');
+    if (v) v.textContent = 'UI ' + UI_BUILD + ' · Server ' + (SERVER_BUILD || 'ចាស់');
+  })();
+  let currentUser = null;
+  let globalData = [];
+  let currentFilteredList = [];
+
+  function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeToggleIcon');
+    if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-bs-theme', next);
+    try { localStorage.setItem('ydv-theme', next); } catch (e) {}
+    updateThemeIcon(next);
+  }
+  updateThemeIcon(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light');
+
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const u = document.getElementById('login-username').value;
+    const p = document.getElementById('login-password').value;
+
+    Swal.fire({
+      title: 'កំពុងផ្ទៀងផ្ទាត់...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            currentUser = res.user;
+            sessionToken = res.token;
+            Swal.fire({
+              icon: 'success',
+              title: 'ជោគជ័យ!',
+              text: 'សូមស្វាគមន៍ ' + currentUser.name,
+              timer: 1200,
+              showConfirmButton: false
+            });
+            showApp();
+          } else {
+            Swal.fire({ icon: 'error', title: 'បរាជ័យ!', text: (res ? res.message : 'គណនី ឬលេខសម្ងាត់មិនត្រឹមត្រូវ') });
+          }
+        })
+        .withFailureHandler(function(err) {
+          Swal.fire({ icon: 'error', title: 'មានបញ្ហា!', text: 'មិនអាចតភ្ជាប់ទៅ Server ៖ ' + err.message });
+        })
+        .checkLogin(u, p);
+    } else {
+      currentUser = { name: u || 'Admin User', role: 'Admin' };
+      Swal.fire({ icon: 'success', title: 'ជោគជ័យ (Demo Mode)', timer: 1000, showConfirmButton: false });
+      showApp();
+    }
+  });
+
+  function logout() {
+    try { if (hasGoogleRun() && sessionToken) google.script.run.logout(sessionToken); } catch (e) {}
+    sessionToken = '';
+    currentUser = null;
+    document.getElementById('app-container').style.display = 'none';
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+  }
+
+  function showApp() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+
+    document.getElementById('user-display-name').innerText = currentUser.name;
+    document.getElementById('user-display-role').innerText = (currentUser.role === 'Admin') ? 'អ្នកគ្រប់គ្រង (Admin)' : 'អ្នកវាយទិន្នន័យ';
+    // Report & thank-you letters are Admin-only; data-entry users never see them
+    ['btn-report', 'btn-letter'].forEach(function (id) {
+      var li = document.getElementById(id).closest('li');
+      if (li) li.style.display = (currentUser.role === 'Admin') ? '' : 'none';
+    });
+
+    setupYearFilter();
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    
+    loadHelpTypes();
+    loadAllData();
+    restoreSidebarState();
+
+    switchTab('dashboard');
+  }
+
+  function switchTab(tab) {
+    if ((tab === 'report' || tab === 'letter') && (!currentUser || currentUser.role !== 'Admin')) tab = 'dashboard';
+    document.getElementById('section-dashboard').style.display = (tab === 'dashboard') ? 'block' : 'none';
+    document.getElementById('section-form').style.display = (tab === 'form') ? 'block' : 'none';
+    document.getElementById('section-report').style.display = (tab === 'report') ? 'block' : 'none';
+    document.getElementById('section-letter').style.display = (tab === 'letter') ? 'block' : 'none';
+
+    document.getElementById('btn-dashboard').classList.toggle('active', tab === 'dashboard');
+    document.getElementById('btn-form').classList.toggle('active', tab === 'form');
+    document.getElementById('btn-report').classList.toggle('active', tab === 'report');
+    document.getElementById('btn-letter').classList.toggle('active', tab === 'letter');
+
+    if (tab === 'letter') {
+      pullLetterSheet(currentContentType());
+      populateLetterDonorSelect();
+    }
+  }
+
+  function printLetterSection() {
+    document.body.classList.add('printing-letter');
+    window.print();
+  }
+
+  window.addEventListener('afterprint', function() {
+    document.body.classList.remove('printing-letter');
+  });
+
+  function loadHelpTypes() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(types) {
+          const select = document.getElementById('helpTypeFromSheet');
+          select.innerHTML = '<option value="">-- ជ្រើសរើស --</option>';
+          if(Array.isArray(types)) {
+            types.forEach(t => {
+              select.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+          }
+        })
+        .withFailureHandler(function() {
+          document.getElementById('helpTypeFromSheet').innerHTML = '<option value="">-- បរាជ័យក្នុងការទាញយក --</option>';
+        })
+        .getHelpTypes(sessionToken);
+    }
+  }
+
+  function toggleHelpTypeFields() {
+    const val = document.getElementById('type').value;
+    const cashFields = document.getElementById('cash-fields');
+    const materialFields = document.getElementById('material-fields');
+
+    if (val === 'សាច់ប្រាក់') {
+      cashFields.style.display = 'block';
+      materialFields.style.display = 'none';
+    } else if (val === 'សម្ភារ') {
+      cashFields.style.display = 'none';
+      materialFields.style.display = 'block';
+    } else if (val === 'ទាំងពីរ') {
+      cashFields.style.display = 'block';
+      materialFields.style.display = 'block';
+    } else {
+      cashFields.style.display = 'none';
+      materialFields.style.display = 'none';
+    }
+  }
+
+  document.getElementById('donorForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    Swal.fire({
+      title: 'កំពុងរក្សាទុក...',
+      text: 'សូមរង់ចាំមួយភ្លែត',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const formData = {
+      id: document.getElementById('edit-id').value,
+      date: document.getElementById('date').value,
+      name: document.getElementById('name').value,
+      source: document.getElementById('source').value,
+      helpTypeFromSheet: document.getElementById('helpTypeFromSheet').value,
+      type: document.getElementById('type').value,
+      amountRiel: document.getElementById('amountRiel').value,
+      amountUsd: document.getElementById('amountUsd').value,
+      itemName: document.getElementById('itemName').value,
+      itemQty: document.getElementById('itemQty').value,
+      itemUnit: document.getElementById('itemUnit').value,
+      itemValueRiel: document.getElementById('itemValueRiel').value,
+      itemValueUsd: document.getElementById('itemValueUsd').value,
+      phone: document.getElementById('phone').value,
+      note: document.getElementById('note').value
+    };
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            Swal.fire({ icon: 'success', title: 'ជោគជ័យ!', text: res.message, timer: 1500, showConfirmButton: false });
+            resetForm();
+            loadAllData();
+            switchTab('dashboard');
+          } else {
+            Swal.fire({ icon: 'error', title: 'បរាជ័យ!', text: (res ? res.message : 'មានបញ្ហាក្នុងการរក្សាទុក') });
+          }
+        })
+        .withFailureHandler(function(err) {
+          Swal.fire({ icon: 'error', title: 'បរាជ័យ!', text: err.message });
+        })
+        .saveData(formData, sessionToken);
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('donorForm').reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    toggleHelpTypeFields();
+  }
+
+  function loadAllData() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          globalData = data || [];
+          renderDashboard();
+          applyReportFilter();
+          populateLetterDonorSelect();
+        })
+        .withFailureHandler(function(err) {
+          console.error("Error loading data: ", err);
+          if (err && /Login/.test(err.message || "")) {
+            Swal.fire({ icon: "warning", title: "Session ផុតកំណត់", text: "សូម Login ម្តងទៀត" }).then(logout);
+          }
+        })
+        .getAllData(sessionToken);
+    }
+  }
+
+  function renderDashboard() {
+    let totalRiel = 0, totalUsd = 0;
+    let matRiel = 0, matUsd = 0;
+
+    let sourceMap = {
+      'សហគមន៍': { count: 0, riel: 0, usd: 0 },
+      'មាតាបិតា': { count: 0, riel: 0, usd: 0 },
+      'គណៈកម្មការថ្នាក់រៀន': { count: 0, riel: 0, usd: 0 },
+      'សប្បុរសជនខាងក្រៅ': { count: 0, riel: 0, usd: 0 }
+    };
+
+    globalData.forEach(item => {
+      totalRiel += Number(item.amountRiel || 0);
+      totalUsd += Number(item.amountUsd || 0);
+      matRiel += Number(item.itemValueRiel || 0);
+      matUsd += Number(item.itemValueUsd || 0);
+
+      if (sourceMap[item.source]) {
+        sourceMap[item.source].count++;
+        sourceMap[item.source].riel += Number(item.amountRiel || 0) + Number(item.itemValueRiel || 0);
+        sourceMap[item.source].usd += Number(item.amountUsd || 0) + Number(item.itemValueUsd || 0);
+      }
+    });
+
+    document.getElementById('stat-total-riel').innerText = totalRiel.toLocaleString() + ' ៛';
+    document.getElementById('stat-total-usd').innerText = '$' + totalUsd.toFixed(2);
+    document.getElementById('stat-material-val').innerText = matRiel.toLocaleString() + ' ៛ / $' + matUsd.toFixed(2);
+    document.getElementById('stat-total-donors').innerText = globalData.length + ' នាក់';
+
+    document.getElementById('stat-source-community').innerText = `${sourceMap['សហគមន៍'].count} នាក់ | ${sourceMap['សហគមន៍'].riel.toLocaleString()} ៛ / $${sourceMap['សហគមន៍'].usd}`;
+    document.getElementById('stat-source-parents').innerText = `${sourceMap['មាតាបិតា'].count} នាក់ | ${sourceMap['មាតាបិតា'].riel.toLocaleString()} ៛ / $${sourceMap['មាតាបិតា'].usd}`;
+    document.getElementById('stat-source-committee').innerText = `${sourceMap['គណៈកម្មការថ្នាក់រៀន'].count} នាក់ | ${sourceMap['គណៈកម្មការថ្នាក់រៀន'].riel.toLocaleString()} ៛ / $${sourceMap['គណៈកម្មការថ្នាក់រៀន'].usd}`;
+    document.getElementById('stat-source-external').innerText = `${sourceMap['សប្បុរសជនខាងក្រៅ'].count} នាក់ | ${sourceMap['សប្បុរសជនខាងក្រៅ'].riel.toLocaleString()} ៛ / $${sourceMap['សប្បុរសជនខាងក្រៅ'].usd}`;
+
+    const tbody = document.getElementById('recent-table-body');
+    tbody.innerHTML = '';
+    const recentList = globalData.slice(-10).reverse();
+
+    if (recentList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3">មិនទាន់មានទិន្នន័យ</td></tr>';
+      return;
+    }
+
+    recentList.forEach(item => {
+      let detail = '';
+      if (item.type === 'សាច់ប្រាក់') {
+        detail = `${Number(item.amountRiel || 0).toLocaleString()} ៛ / $${item.amountUsd || 0}`;
+      } else if (item.type === 'សម្ភារ') {
+        detail = `${item.itemName} (${item.itemQty || 0} ${item.itemUnit || ''})`;
+      } else {
+        detail = `${Number(item.amountRiel || 0).toLocaleString()} ៛ / $${item.amountUsd || 0} + ${item.itemName}`;
+      }
+
+      let letterBtn = '';
+      if (currentUser && currentUser.role === 'Admin') {
+        letterBtn = `<button class="btn btn-sm btn-outline-secondary me-1" title="បង្កើតលិខិតថ្លែងអំណរគុណ" onclick="goToLetterForDonor('${item.id}')"><i class="fa-solid fa-certificate"></i></button>`;
+      }
+      let deleteBtn = '';
+      if (currentUser && currentUser.role === 'Admin') {
+        deleteBtn = `<button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item.id}')"><i class="fa-solid fa-trash"></i></button>`;
+      }
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${item.date}</td>
+          <td class="fw-bold">${item.name}</td>
+          <td><span class="badge bg-secondary">${item.source}</span></td>
+          <td>${item.type}</td>
+          <td>${detail}</td>
+          <td>
+            ${letterBtn}
+            <button class="btn btn-sm btn-outline-warning me-1" onclick="editItem('${item.id}')"><i class="fa-solid fa-pen"></i></button>
+            ${deleteBtn}
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  function setupYearFilter() {
+    const yearSelect = document.getElementById('filter-year');
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '<option value="">-- គ្រប់ឆ្នាំ --</option>';
+    for (let y = currentYear; y >= currentYear - 5; y--) {
+      yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+    }
+  }
+
+  function applyReportFilter() {
+    const year = document.getElementById('filter-year').value;
+    const semester = document.getElementById('filter-semester').value;
+    const month = document.getElementById('filter-month').value;
+
+    currentFilteredList = globalData.filter(item => {
+      if (!item.date) return false;
+      const d = new Date(item.date);
+      const itemYear = d.getFullYear().toString();
+      const itemMonth = (d.getMonth() + 1).toString().padStart(2, '0');
+
+      if (year && itemYear !== year) return false;
+      if (month && itemMonth !== month) return false;
+      if (semester) {
+        const m = d.getMonth() + 1;
+        if (semester === '1' && (m < 1 || m > 6)) return false;
+        if (semester === '2' && (m < 7 || m > 12)) return false;
+      }
+      return true;
+    });
+
+    renderReportTable(currentFilteredList);
+  }
+
+  function renderReportTable(list) {
+    const printableArea = document.getElementById('printable-area');
+    if (!printableArea) return;
+
+    if (!list || list.length === 0) {
+      printableArea.innerHTML = `
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-folder-open fa-3x mb-3"></i>
+          <h5>មិនមានទិន្នន័យសម្រាប់បង្ហាញឡើយ</h5>
+        </div>
+      `;
+      return;
+    }
+
+    const year = document.getElementById('filter-year').value;
+    const semester = document.getElementById('filter-semester').value;
+    const month = document.getElementById('filter-month').value;
+    
+    let filterLabelText = 'របាយការណ៍៖ ';
+    filterLabelText += year ? `ឆ្នាំ ${year} ` : 'គ្រប់ឆ្នាំ ';
+    filterLabelText += semester ? `(ឆមាសទី ${semester}) ` : '';
+    filterLabelText += month ? `ខែ ${month}` : '';
+
+    const headerHTML = `
+      <div class="text-center mb-2" style="width: 100%;">
+        <h5 class="moul-text mb-1" style="font-size: 1.1rem;">ព្រះរាជាណាចក្រកម្ពុជា</h5>
+        <h6 class="moul-text mb-2" style="font-size: 0.95rem;">ជាតិ សាសនា ព្រះមហាក្សត្រ</h6>
+        <div class="d-flex justify-content-center mb-2">
+          <span class="border-bottom border-dark px-4"></span>
+        </div>
+        <h6 class="moul-text text-start mb-1" style="font-size: 0.9rem;">សាលាបឋមសិក្សាយ៉ាដាវ</h6>
+        <h6 class="moul-text text-center mb-1" style="font-size: 0.95rem;">បញ្ជីសប្បុរសជន និងជំនួយទទួលបាន</h6>
+        <p class="text-muted small mb-1">${filterLabelText}</p>
+      </div>
+    `;
+
+    const footerSignaturesHTML = `
+      <div class="signature-block" style="width: 100%; margin-top: 0; padding-top: 0;">
+        <div class="row g-0">
+          <div class="col-4 text-center">
+            <p class="fw-bold mb-1 small">បានឃើញ និងឯកភាព</p>
+            <p class="moul-text fw-bold small">នាយកសាលា</p>
+          </div>
+          <div class="col-4 text-center">
+            <p class="fw-bold mb-1 small">បានឃើញ និងពិនិត្យត្រឹមត្រូវ</p>
+            <p class="moul-text fw-bold small">ប្រធានគណៈកម្មការសាលារៀន</p>
+          </div>
+          <div class="col-4 text-center">
+            <p class="mb-1 small">យ៉ាដាវ ថ្ងៃទី ..... ខែ ...... ឆ្នាំ ២០២...</p>
+            <p class="moul-text fw-bold small">ហិរញ្ញឹក/អ្នកធ្វើតារាង</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const pages = [];
+    const totalItems = list.length;
+
+    if (totalItems <= 22) {
+      pages.push(list);
+    } else {
+      let p1Limit = 22;
+      let otherLimit = 22;
+      if (totalItems >= 23 && totalItems <= 26) {
+        p1Limit = totalItems - 1;
+      } else if (totalItems > 26) {
+        p1Limit = 25;
+      }
+      pages.push(list.slice(0, p1Limit));
+      let currentIndex = p1Limit;
+      while (currentIndex < totalItems) {
+        pages.push(list.slice(currentIndex, currentIndex + otherLimit));
+        currentIndex += otherLimit;
+      }
+    }
+
+    const totalPages = pages.length;
+
+    let grandKHR = 0, grandUSD = 0, grandEstKHR = 0, grandEstUSD = 0;
+    list.forEach(item => {
+      grandKHR += Number(item.amountRiel) || 0;
+      grandUSD += Number(item.amountUsd) || 0;
+      grandEstKHR += Number(item.itemValueRiel) || 0;
+      grandEstUSD += Number(item.itemValueUsd) || 0;
+    });
+
+    let cumulativeKHR = 0;
+    let cumulativeUSD = 0;
+    let cumulativeEstKHR = 0;
+    let cumulativeEstUSD = 0;
+
+    let fullHTML = '';
+    let globalIdxCounter = 1;
+
+    pages.forEach((pageItems, page) => {
+      let pageKHR = 0;
+      let pageUSD = 0;
+      let pageEstKHR = 0;
+      let pageEstUSD = 0;
+
+      const prevCumulativeKHR = cumulativeKHR;
+      const prevCumulativeUSD = cumulativeUSD;
+      const prevCumulativeEstKHR = cumulativeEstKHR;
+      const prevCumulativeEstUSD = cumulativeEstUSD;
+
+      let rowsHTML = '';
+
+      pageItems.forEach((item) => {
+        const globalIdx = globalIdxCounter++;
+        const amountKHR = Number(item.amountRiel) || 0;
+        const amountUSD = Number(item.amountUsd) || 0;
+        const estValKHR = Number(item.itemValueRiel) || 0;
+        const estValUSD = Number(item.itemValueUsd) || 0;
+
+        pageKHR += amountKHR;
+        pageUSD += amountUSD;
+        pageEstKHR += estValKHR;
+        pageEstUSD += estValUSD;
+
+        const matInfo = item.itemName ? `${item.itemName} (${item.itemQty || 0} ${item.itemUnit || ''})` : '-';
+        const estVal = (estValKHR || estValUSD) ? `${estValKHR.toLocaleString()} ៛ / $${estValUSD.toFixed(2)}` : '-';
+
+        rowsHTML += `
+          <tr class="border-dark">
+            <td class="text-center border-dark">${globalIdx}</td>
+            <td class="border-dark">${item.date}</td>
+            <td class="border-dark">${item.name}</td>
+            <td class="border-dark">${item.source}</td>
+            <td class="border-dark">${item.helpTypeFromSheet || '-'}</td>
+            <td class="text-end border-dark">${amountKHR ? amountKHR.toLocaleString() + ' ៛' : '-'}</td>
+            <td class="text-end border-dark">${amountUSD ? '$' + amountUSD.toFixed(2) : '-'}</td>
+            <td class="border-dark">${matInfo}</td>
+            <td class="text-end border-dark">${estVal}</td>
+            <td class="border-dark">${item.remark || item.note || ''}</td>
+          </tr>
+        `;
+      });
+
+      cumulativeKHR += pageKHR;
+      cumulativeUSD += pageUSD;
+      cumulativeEstKHR += pageEstKHR;
+      cumulativeEstUSD += pageEstUSD;
+
+      const isLastPage = (page === totalPages - 1);
+
+      const prevPageSummaryRow = (page > 0) ? `
+        <tr class="table-secondary border-dark fw-bold">
+          <td colspan="5" class="text-center border-dark">សរុបពីទំព័រទី 1 ដល់ទី ${page}</td>
+          <td class="text-end border-dark">${prevCumulativeKHR.toLocaleString()} ៛</td>
+          <td class="text-end border-dark">$${prevCumulativeUSD.toFixed(2)}</td>
+          <td class="text-center border-dark">-</td>
+          <td class="text-end border-dark">${prevCumulativeEstKHR ? prevCumulativeEstKHR.toLocaleString() + ' ៛' : ''} ${prevCumulativeEstUSD ? '<br> $' + prevCumulativeEstUSD.toFixed(2) : ''}</td>
+          <td class="text-center border-dark"></td>
+        </tr>
+      ` : '';
+
+      const pageSummaryRow = `
+        <tr class="table-light border-dark fw-bold">
+          <td colspan="5" class="text-center border-dark">សរុបទំព័រទី ${page + 1}</td>
+          <td class="text-end border-dark text-danger">${pageKHR.toLocaleString()} ៛</td>
+          <td class="text-end border-dark text-danger">$${pageUSD.toFixed(2)}</td>
+          <td class="text-center border-dark">-</td>
+          <td class="text-end border-dark text-primary">${pageEstKHR ? pageEstKHR.toLocaleString() + ' ៛' : ''} ${pageEstUSD ? '<br> $' + pageEstUSD.toFixed(2) : ''}</td>
+          <td class="text-center border-dark"></td>
+        </tr>
+      `;
+
+      const grandSummaryRow = isLastPage ? `
+        <tr class="table-warning border-dark fw-bold">
+          <td colspan="5" class="text-center border-dark">សរុបរួមទាំងអស់ (គ្រប់ទំព័រ)</td>
+          <td class="text-end border-dark text-danger">${grandKHR.toLocaleString()} ៛</td>
+          <td class="text-end border-dark text-danger">$${grandUSD.toFixed(2)}</td>
+          <td class="text-center border-dark">-</td>
+          <td class="text-end border-dark text-primary">${grandEstKHR ? grandEstKHR.toLocaleString() + ' ៛' : ''} ${grandEstUSD ? '<br> $' + grandEstUSD.toFixed(2) : ''}</td>
+          <td class="text-center border-dark"></td>
+        </tr>
+      ` : '';
+
+      const pageNumberHTML = `
+        <div class="text-end text-muted small pt-2" style="font-size: 0.75rem; border-top: 1px dashed #ccc; margin-top: 5px;">
+          ទំព័រទី ${page + 1} / ${totalPages}
+        </div>
+      `;
+
+      fullHTML += `
+        <div class="print-page mb-4 p-3 bg-white rounded shadow-sm">
+          <div style="width: 100%;">
+            ${page === 0 ? headerHTML : '<div class="pt-2"></div>'}
+            
+            <table class="table table-bordered align-middle text-center mb-0">
+              <thead class="table-light border-dark">
+                <tr>
+                  <th style="width: 1%;">ល.រ</th>
+                  <th style="width: 7%;">កាលបរិច្ឆេទ</th>
+                  <th style="width: 14%;">ឈ្មោះសប្បុរសជន</th>
+                  <th style="width: 12%;">ប្រភព</th>
+                  <th style="width: 15%;">ប្រភេទជំនួយ</th>
+                  <th style="width: 10%;">ថវិកា (រៀល)</th>
+                  <th style="width: 10%;">ថវិកា ($)</th>
+                  <th style="width: 12%;">សម្ភារ (បរិមាណ/ឯកតា)</th>
+                  <th style="width: 12%;">តម្លៃប៉ាន់ស្មាន</th>
+                  <th style="width: 8%;">ផ្សេងៗ</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${prevPageSummaryRow}
+                ${rowsHTML}
+                ${pageSummaryRow}
+                ${grandSummaryRow}
+              </tbody>
+            </table>
+
+            ${isLastPage ? `<div class="signature-block" style="margin-top: 2mm;">${footerSignaturesHTML}</div>` : ''}
+          </div>
+
+          <div style="width: 100%;">
+            ${pageNumberHTML}
+          </div>
+        </div>
+      `;
+    });
+
+    printableArea.innerHTML = fullHTML;
+  }
+
+  function editItem(id) {
+    const item = globalData.find(d => d.id === id);
+    if (!item) return;
+
+    document.getElementById('edit-id').value = item.id;
+    document.getElementById('date').value = item.date;
+    document.getElementById('name').value = item.name;
+    document.getElementById('source').value = item.source;
+    document.getElementById('helpTypeFromSheet').value = item.helpTypeFromSheet;
+    document.getElementById('type').value = item.type;
+
+    toggleHelpTypeFields();
+
+    document.getElementById('amountRiel').value = item.amountRiel;
+    document.getElementById('amountUsd').value = item.amountUsd;
+    document.getElementById('itemName').value = item.itemName;
+    document.getElementById('itemQty').value = item.itemQty;
+    document.getElementById('itemUnit').value = item.itemUnit;
+    document.getElementById('itemValueRiel').value = item.itemValueRiel;
+    document.getElementById('itemValueUsd').value = item.itemValueUsd;
+    document.getElementById('phone').value = item.phone;
+    document.getElementById('note').value = item.note;
+
+    switchTab('form');
+  }
+
+  function deleteItem(id) {
+    if (currentUser.role !== 'Admin') {
+      Swal.fire('ហាមឃាត់!', 'អ្នកមិនមានសិទ្ធិក្នុងការលុបទិន្នន័យឡើយ!', 'error');
+      return;
+    }
+
+    Swal.fire({
+      title: 'តើអ្នកប្រាកដទេ?',
+      text: "ទិន្នន័យនេះនឹងត្រូវលុបចេញពី Google Sheet!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'បាទ/ចាស, លុប!',
+      cancelButtonText: 'បោះបង់'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'កំពុងលុប...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (res && res.success) {
+                Swal.fire('បានលុប!', res.message, 'success');
+                loadAllData();
+              } else {
+                Swal.fire('បរាជ័យ!', (res ? res.message : 'មិនអាចលុបទិន្នន័យបានទេ'), 'error');
+              }
+            })
+            .withFailureHandler(function(err) {
+              Swal.fire('បរាជ័យ!', err.message, 'error');
+            })
+            .deleteData(id, sessionToken);
+        }
+      }
+    });
+  }
+
+  let selectedDonorIds = [];
+  let recipientCustomData = {};
+
+  const frameUploader = document.getElementById('frameUploader');
+  const bgUploader = document.getElementById('bgUploader');
+  const bottomBgUploader = document.getElementById('bottomBgUploader');
+  
+  let customFrameImageSrc = '';
+  let centerBgImageSrc = '';
+  let bottomBgImageSrc = '';
+
+  function updateFileNameDisplay(inputId, textId) {
+    const input = document.getElementById(inputId);
+    const textSpan = document.getElementById(textId);
+    if (input.files && input.files.length > 0) {
+      textSpan.innerText = input.files[0].name;
+      textSpan.style.color = '#0f172a';
+      textSpan.style.fontWeight = '600';
+    }
+  }
+
+  frameUploader.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        customFrameImageSrc = evt.target.result;
+        updateAllLetterPreviews();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  function resetFrame() {
+    customFrameImageSrc = '';
+    frameUploader.value = '';
+    document.getElementById('frameFileName').innerText = 'ជ្រើសរើសឯកសារ Frame...';
+    document.getElementById('frameFileName').style.color = '#64748b';
+    document.getElementById('frameFileName').style.fontWeight = 'normal';
+    updateAllLetterPreviews();
+  }
+
+  bgUploader.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        centerBgImageSrc = evt.target.result;
+        updateAllLetterPreviews();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  function resetCenterBg() {
+    centerBgImageSrc = '';
+    bgUploader.value = '';
+    document.getElementById('bgFileName').innerText = 'ជ្រើសរើសឯកសារ Background...';
+    document.getElementById('bgFileName').style.color = '#64748b';
+    document.getElementById('bgFileName').style.fontWeight = 'normal';
+    updateAllLetterPreviews();
+  }
+
+  bottomBgUploader.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        bottomBgImageSrc = evt.target.result;
+        updateAllLetterPreviews();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  function resetBottomBg() {
+    bottomBgImageSrc = '';
+    bottomBgUploader.value = '';
+    document.getElementById('bottomBgFileName').innerText = 'ជ្រើសរើសឯកសារផ្នែកខាងក្រោម...';
+    document.getElementById('bottomBgFileName').style.color = '#64748b';
+    document.getElementById('bottomBgFileName').style.fontWeight = 'normal';
+    updateAllLetterPreviews();
+  }
+
+  const khmerNumbers = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+  const khmerDays = ['អាទិត្យ', 'ច័ន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'];
+  const khmerMonths = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const lunarMonths = ["មិគសិរ", "បុស្ស", "មាឃ", "ផល្គុន", "ចេត្រ", "ពិសាខ", "ជេស្ឋ", "អាសាឍ", "ស្រាពណ៍", "ភទ្របទ", "អស្សុជ", "កត្តិក"];
+  const animalYears = ["ជូត", "ឆ្លូវ", "ខាល", "ថោះ", "រោង", "ម្សាញ់", "មមី", "មមែ", "វក", "រកា", "ច", "កុរ"];
+  const saks = ["ឯកស័ក", "ទោស័ក", "ត្រីស័ក", "ចត្វាស័ក", "បញ្ចស័ក", "ឆស័ក", "សប្តស័ក", "អដ្ឋស័ក", "នព្វស័ក", "សំរឹទ្ធិស័ក"];
+
+  function toKhmerNum(num) {
+    return num.toString().split('').map(n => khmerNumbers[n] || n).join('');
+  }
+
+  function getKhmerYearAndSak(date) {
+    const gYear = date.getFullYear();
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    const isAfterKNY = (m > 4) || (m === 4 && d >= 14);
+    const khmerYear = isAfterKNY ? gYear : gYear - 1;
+
+    let animalIdx = (khmerYear - 2020 + 0) % 12;
+    if (animalIdx < 0) animalIdx += 12;
+
+    let sakIdx = (khmerYear - 2026 + 7) % 10;
+    if (sakIdx < 0) sakIdx += 10;
+
+    const beYear = khmerYear + 544;
+    return { animal: animalYears[animalIdx], sak: saks[sakIdx], be: beYear };
+  }
+
+  function calculateKhmerLunar(d) {
+    const dayName = khmerDays[d.getDay()];
+    const refDate = new Date(2024, 0, 11);
+    const diffDays = (d.getTime() - refDate.getTime()) / (1000 * 3600 * 24);
+    let cycle = (diffDays % 29.530588 + 29.530588) % 29.530588;
+    let dayNum = Math.floor(cycle) + 1;
+    let phase = (dayNum <= 15) ? `${toKhmerNum(dayNum)}កើត` : `${toKhmerNum(dayNum - 15)}រោច`;
+    let mIdx = (d.getMonth() + (d.getDate() >= 12 ? 0 : 11)) % 12;
+    let lunarMonth = lunarMonths[mIdx];
+    const yearData = getKhmerYearAndSak(d);
+    return `ថ្ងៃ${dayName} ${phase} ខែ${lunarMonth} ឆ្នាំ${yearData.animal} ${yearData.sak} ព.ស. ${toKhmerNum(yearData.be)}`;
+  }
+
+  function updateDatesFromPicker() {
+    const dateVal = document.getElementById('solarDatePicker').value;
+    if (!dateVal) return;
+
+    const t = formatLetterDates(dateVal, defaultSchoolValue());
+    document.getElementById('inLunarDate').value = t.lunar;
+    document.getElementById('inSolarDate').value = t.solar;
+    updateAllLetterPreviews();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    const picker = document.getElementById('solarDatePicker');
+    if (picker) {
+      picker.value = `${yyyy}-${mm}-${dd}`;
+      updateDatesFromPicker();
+    }
+  });
+
+  const contentPresets = {
+    appreciation: {
+      sheetHint: /ថ្លែងអំណរគុណ|អំណរគុណ|appreciation|thank/i,
+      title: "លិខិតថ្លែងអំណរគុណ",
+      action: "សូមថ្លែងអំណរគុណយ៉ាងជ្រាលជ្រៅចំពោះ",
+      donorName: "លោក ឈិន ពិសិដ្ឋ",
+      sponsorDetails: "ថវិកាចំនួន ៥,០០០៛ (ប្រាំពាន់រៀល) និង កុំព្យូទ័រ ចំនួន ៥គ្រឿង",
+      purpose: "កសាងអគារសិក្សា",
+      regNo: "៧៩៣",
+      contentTemplate: function(data) {
+        return `ដែលបានឧបត្ថម្ភ <span class="highlight-text">${data.sponsorDetails}</span> ជូនដល់សាលាបឋមសិក្សា <span class="highlight-text">${data.school}</span> ដើម្បីបម្រើឱ្យការ <span class="highlight-text">${data.purpose}</span> និងជួយចូលរួមអភិវឌ្ឍកែទម្រង់វិស័យអប់រំ។ សូមគោរពជូនពរដល់សប្បុរសជន និងក្រុមគ្រួសារទាំងអស់ជួបប្រទះនូវពុទ្ធពរ ៤ ប្រការ គឺអាយុ វណ្ណៈ សុខៈ និងពលៈ កុំបីឃ្លៀងឃ្លៀតឡើយ។`;
+      }
+    },
+    commendation: {
+      sheetHint: /សរសើរ|commend|praise/i,
+      title: "លិខិតសរសើរ",
+      action: "សូមកោតសរសើរ និងលើកទឹកចិត្តចំពោះ",
+      donorName: "កញ្ញា សុខ ជា",
+      sponsorDetails: "ស្នាដៃឆ្នើមក្នុងការបង្រៀន និងដឹកនាំសិស្ស",
+      purpose: "ការលើកកម្ពស់គុណភាពអប់រំ",
+      regNo: "៦៩៨",
+      contentTemplate: function(data) {
+        return `ដែលមានស្នាដៃល្អប្រសើរក្នុងការ <span class="highlight-text">${data.sponsorDetails}</span> នៅសាលាបឋមសិក្សា <span class="highlight-text">${data.school}</span> ក្នុងគោលបំណង <span class="highlight-text">${data.purpose}</span> យ៉ាងសកម្ម។ សូមជូនពរឲ្យទទួលបានជោគជ័យគ្រប់ភារកិច្ច និងប្រកបដោយពុទ្ធពរទាំង ៤ ប្រការ។`;
+      }
+    },
+    honor: {
+      sheetHint: /កិត្តិយស|honou?r/i,
+      title: "លិខិតកិត្តិយស",
+      action: "សូមប្រគល់ជូននូវលិខិតកិត្តិយសនេះជូន",
+      donorName: "លោកស្រី មាស ផល្លា",
+      sponsorDetails: "ការចូលរួមឧបត្ថម្ភគាំទ្រយ៉ាងសកម្ម",
+      purpose: "ការងារអភិវឌ្ឍន៍សាលារៀន",
+      regNo: "៤៥២",
+      contentTemplate: function(data) {
+        return `ដើម្បីទទួលស្គាល់ <span class="highlight-text">${data.sponsorDetails}</span> និងជួយជ្រោមជ្រែងសាលាបឋមសិក្សា <span class="highlight-text">${data.school}</span> លើការងារ <span class="highlight-text">${data.purpose}</span>។ សូមជូនពរលោក លោកស្រី និងគ្រួសារមានសុខភាពល្អ និងជោគជ័យគ្រប់ភារកិច្ច។`;
+      }
+    }
+  };
+
+  const importedRecords = { appreciation: [], commendation: [], honor: [] };
+  const importedMeta = {};
+  let pendingSheets = [];
+  let pendingSourceLabel = '';
+  const sampleRecords = { appreciation: [], commendation: [], honor: [] };
+  const letterPullStatus = {};
+  const pullInFlight = {};
+
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function changeContentPreset(type) {
+    const preset = contentPresets[type];
+    if (!preset) return;
+
+    const visible = new Set(getActiveRecords().map(r => r.id));
+    selectedDonorIds = selectedDonorIds.filter(id => visible.has(id));
+
+    refreshAutoCustoms();
+    pullLetterSheet(type);
+
+    syncSourceUI();
+    populateLetterDonorSelect();
+    updateAllLetterPreviews();
+  }
+
+  function refreshAutoCustoms() {
+    Object.keys(recipientCustomData).forEach(id => {
+      const c = recipientCustomData[id];
+      if (c && c._auto) {
+        const it = findRecord(id);
+        if (it) recipientCustomData[id] = makeCustom(it);
+      }
+    });
+  }
+
+  function pullLetterSheet(type, opts) {
+    opts = opts || {};
+    const sheetName = contentPresets[type] && contentPresets[type].title;
+    if (!sheetName || !hasGoogleRun()) return Promise.resolve();
+
+    if (pullInFlight[type]) {
+      return opts.force ? pullInFlight[type].then(() => pullLetterSheet(type, opts)) : pullInFlight[type];
+    }
+
+    letterPullStatus[type] = { state: 'loading' };
+
+    const p = gsCall('getSheetRows', sheetName)
+      .then(rows => {
+        const res = sheetToRecords(rows, type, sheetName);
+        if (res.error) {
+          const hasRows = Array.isArray(rows) && rows.length > 0;
+          letterPullStatus[type] = hasRows ? { state: 'error', msg: 'រកមិនឃើញជួរឈរ “ឈ្មោះ”' } : { state: 'empty' };
+          if (!opts.keepIfEmpty) importedRecords[type] = [];
+          return;
+        }
+        if (!res.records.length && opts.keepIfEmpty && importedRecords[type].length) {
+          letterPullStatus[type] = { state: 'ok', count: importedRecords[type].length };
+          return;
+        }
+        res.records.forEach(r => { r.id = `sheet_${type}_${r._row}`; });
+        importedRecords[type] = res.records;
+        importedMeta[type] = [sheetName];
+        letterPullStatus[type] = { state: res.records.length ? 'ok' : 'empty', count: res.records.length };
+      })
+      .catch(err => {
+        const msg = (err && err.message) || String(err);
+        if (/រកមិនឃើញ|not found|no such|does not exist/i.test(msg)) {
+          importedRecords[type] = [];
+          letterPullStatus[type] = { state: 'empty' };
+        } else {
+          letterPullStatus[type] = { state: 'error', msg: msg };
+        }
+      })
+      .then(() => {
+        delete pullInFlight[type];
+        const still = new Set((importedRecords[type] || []).map(r => r.id));
+        const prefix = `sheet_${type}_`;
+        selectedDonorIds = selectedDonorIds.filter(id => !String(id).startsWith(prefix) || still.has(id));
+        refreshAutoCustoms();
+        if (currentContentType() === type) {
+          populateLetterDonorSelect();
+          updateAllLetterPreviews();
+        }
+      });
+
+    pullInFlight[type] = p;
+    return p;
+  }
+
+  const khOnes = ['', 'មួយ', 'ពីរ', 'បី', 'បួន', 'ប្រាំ', 'ប្រាំមួយ', 'ប្រាំពីរ', 'ប្រាំបី', 'ប្រាំបួន'];
+  const khTens = { 1: 'ដប់', 2: 'ម្ភៃ', 3: 'សាមសិប', 4: 'សែសិប', 5: 'ហាសិប', 6: 'ហុកសិប', 7: 'ចិតសិប', 8: 'ប៉ែតសិប', 9: 'កៅសិប' };
+
+  function khReadUnder1000(n) {
+    if (n <= 0) return '';
+    const hundreds = Math.floor(n / 100);
+    const rem = n % 100;
+    let parts = [];
+    if (hundreds > 0) parts.push(khOnes[hundreds] + 'រយ');
+    if (rem > 0) {
+      const tens = Math.floor(rem / 10);
+      const unit = rem % 10;
+      if (tens > 0) {
+        parts.push(khTens[tens] + (unit > 0 ? khOnes[unit] : ''));
+      } else {
+        parts.push(khOnes[unit]);
+      }
+    }
+    return parts.join('');
+  }
+
+  function khReadBelowMillion(n) {
+    if (n <= 0) return '';
+    const senn = Math.floor(n / 100000);
+    const remA = n % 100000;
+    const muen = Math.floor(remA / 10000);
+    const remB = remA % 10000;
+    const poan = Math.floor(remB / 1000);
+    const remC = remB % 1000;
+
+    let parts = [];
+    if (senn > 0) parts.push(khOnes[senn] + 'សែន');
+    if (muen > 0) parts.push(khOnes[muen] + 'ម៉ឺន');
+    if (poan > 0) parts.push(khOnes[poan] + 'ពាន់');
+    if (remC > 0) parts.push(khReadUnder1000(remC));
+    return parts.join('');
+  }
+
+  function khReadNumber(n) {
+    n = Math.floor(Math.abs(Number(n) || 0));
+    if (n === 0) return 'សូន្យ';
+    if (n < 1000000) return khReadBelowMillion(n);
+
+    const millions = Math.floor(n / 1000000);
+    const remainder = n % 1000000;
+    return khReadNumber(millions) + 'លាន' + (remainder > 0 ? khReadBelowMillion(remainder) : '');
+  }
+
+  function khRielWords(amount) {
+    return khReadNumber(amount) + 'រៀល';
+  }
+
+  function khUsdWords(amount) {
+    const dollars = Math.floor(amount);
+    const cents = Math.round((amount - dollars) * 100);
+    let words = khReadNumber(dollars) + 'ដុល្លារ';
+    if (cents > 0) words += ' និង ' + khReadNumber(cents) + 'សេន';
+    return words;
+  }
+
+  function buildSponsorDetailsText(item) {
+    if (item.sponsorText && String(item.sponsorText).trim()) return String(item.sponsorText).trim();
+
+    const parts = [];
+    const khr = Number(item.amountRiel) || 0;
+    const usd = Number(item.amountUsd) || 0;
+
+    if (khr > 0) parts.push(`ថវិកាជាប្រាក់រៀលចំនួន ${khr.toLocaleString()}៛ (${khRielWords(khr)})`);
+    if (usd > 0) parts.push(`ថវិកាជាប្រាក់ដុល្លាចំនួន $${usd.toFixed(2)} (${khUsdWords(usd)})`);
+    if (item.itemName) {
+      const qty = item.itemQty ? `${item.itemQty} ${item.itemUnit || ''}`.trim() : '';
+      parts.push(`${item.itemName}${qty ? ' ចំនួន ' + qty : ''}`.trim());
+    }
+
+    return parts.length ? parts.join(' និងជី ') : '-';
+  }
+
+  function currentContentType() {
+    const el = document.getElementById('contentTypeSelect');
+    return (el && el.value && contentPresets[el.value]) ? el.value : 'appreciation';
+  }
+
+  function defaultRegNoValue() {
+    const el = document.getElementById('inRegNo');
+    return (el && el.value) || '៧៩៣';
+  }
+
+  function makeCustom(item) {
+    const preset = contentPresets[currentContentType()];
+    return {
+      name: item.name,
+      sponsorDetails: buildSponsorDetailsText(item),
+      purpose: item.helpTypeFromSheet || (preset && preset.purpose) || 'កសាងអគារសិក្សា',
+      regNo: item.regNo || '',
+      school: '',
+      signatory: '',
+      date: '',
+      _auto: true
+    };
+  }
+
+  function defaultSchoolValue() {
+    const el = document.getElementById('inSchool');
+    return (el && el.value.trim()) || 'យ៉ាដាវ';
+  }
+  function defaultSignatoryValue() {
+    const el = document.getElementById('inSignatory');
+    return (el && el.value.trim()) || 'សំ ស៊ឺរ៉ាបុង';
+  }
+  function defaultDateValue() {
+    const el = document.getElementById('solarDatePicker');
+    return (el && el.value) || '';
+  }
+
+  function formatLetterDates(dateVal, schoolName) {
+    if (!dateVal) return { solar: '', lunar: '' };
+    const parts = dateVal.split('-');
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    return {
+      solar: `${schoolName} ថ្ងៃទី${toKhmerNum(date.getDate())} ខែ${khmerMonths[date.getMonth()]} ឆ្នាំ${toKhmerNum(date.getFullYear())}`,
+      lunar: calculateKhmerLunar(date)
+    };
+  }
+
+  // ប្រមូលទិន្នន័យនាំចូលពីគ្រប់ប្រភេទលិខិតទាំងអស់យ៉ាងត្រឹមត្រូវ
+  function allImportedRecords() {
+    let list = [];
+    Object.keys(importedRecords).forEach(t => {
+      if (Array.isArray(importedRecords[t])) list = list.concat(importedRecords[t]);
+      if (Array.isArray(sampleRecords[t])) list = list.concat(sampleRecords[t]);
+    });
+    return list;
+  }
+
+  // មុខងារស្វែងរកកំណត់ត្រាទាំងក្នុង globalData និងគ្រប់ប្រភេទ importedRecords ទាំងអស់
+  function findRecord(id) {
+    if (!id) return null;
+    let found = globalData.find(d => d.id === id);
+    if (found) return found;
+    return allImportedRecords().find(d => d.id === id) || null;
+  }
+
+  function getActiveRecords() {
+    const t = currentContentType();
+    const samples = sampleRecords[t] || [];
+    if (t === 'appreciation') {
+      return samples.concat(globalData.slice().reverse(), importedRecords[t] || []);
+    }
+    return (importedRecords[t] || []).concat(samples);
+  }
+
+  function syncSourceUI() {
+    const all = document.getElementById('selectAllDonors');
+    if (all) all.checked = false;
+  }
+
+  function populateLetterDonorSelect() {
+    const listContainer = document.getElementById('donorCheckboxList');
+    if (!listContainer) return;
+
+    const searchTerm = (document.getElementById('donorSearchInput').value || '').toLowerCase();
+
+    let html = '';
+    getActiveRecords().forEach(item => {
+      if (searchTerm && !String(item.name || '').toLowerCase().includes(searchTerm)) return;
+      const isChecked = selectedDonorIds.includes(item.id) ? 'checked' : '';
+
+      let customDetailsText = '';
+      if (isChecked && recipientCustomData[item.id]) {
+        const c = recipientCustomData[item.id];
+        customDetailsText = `
+          <div class="mt-1 pt-1 border-top text-primary" style="font-size: 11px;">
+            <span>លេខចុះបញ្ជី៖ <strong>${esc(c.regNo || defaultRegNoValue())}</strong> | ${esc(c.name)} | ${esc(c.sponsorDetails)} (${esc(c.purpose)})</span>
+          </div>
+        `;
+      }
+
+      let editBtn = isChecked ? `
+        <button class="btn btn-sm btn-outline-primary py-0 px-1 ms-2" title="កែប្រែដោយដៃ" onclick="event.stopPropagation(); editRecipientModal('${item.id}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+      ` : '';
+
+      const dateText = item.date ? `(${esc(item.date)})` : '';
+
+      html += `
+        <div class="p-2 mb-1 border rounded bg-white ${isChecked ? 'border-primary shadow-sm' : ''}">
+          <div class="form-check m-0 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center flex-grow-1">
+              <input class="form-check-input donor-checkbox me-2" type="checkbox" value="${item.id}" id="donor_chk_${item.id}" ${isChecked} onchange="handleDonorCheckboxChange('${item.id}', this.checked)">
+              <label class="form-check-label small fw-bold mb-0 w-100" for="donor_chk_${item.id}">
+                ${esc(item.name)} <span class="text-muted fw-normal" style="font-size: 11px;">${dateText}</span>
+              </label>
+            </div>
+            <div>${editBtn}</div>
+          </div>
+          ${customDetailsText}
+        </div>
+      `;
+    });
+
+    let emptyMsg = 'រកមិនឃើញទិន្នន័យ';
+    const curType = currentContentType();
+    if (curType !== 'appreciation' && !getActiveRecords().length) {
+      const title = contentPresets[curType].title;
+      const st = letterPullStatus[curType] || {};
+      if (st.state === 'loading') emptyMsg = 'កំពុងទាញទិន្នន័យ...';
+      else if (st.state === 'error') emptyMsg = `ទាញ «${esc(title)}» មិនបាន (${esc(st.msg || '')}) <a href="#" onclick="pullLetterSheet(currentContentType(), { force: true }); return false;">ទាញឡើងវិញ</a>`;
+      else emptyMsg = `មិនទាន់មានទិន្នន័យ «${esc(title)}»`;
+    }
+    listContainer.innerHTML = html || `<div class="text-muted small text-center py-2">${emptyMsg}</div>`;
+    updateSelectedCountBadge();
+  }
+
+  function filterDonorCheckboxList() {
+    populateLetterDonorSelect();
+  }
+
+  function toggleSelectAllDonors(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('.donor-checkbox');
+    selectedDonorIds = [];
+    checkboxes.forEach(chk => {
+      chk.checked = masterCheckbox.checked;
+      if (chk.checked) {
+        selectedDonorIds.push(chk.value);
+        if (!recipientCustomData[chk.value]) {
+          const item = findRecord(chk.value);
+          if (item) recipientCustomData[chk.value] = makeCustom(item);
+        }
+      }
+    });
+    populateLetterDonorSelect();
+    renderPreviewPanels();
+  }
+
+  function handleDonorCheckboxChange(id, isChecked) {
+    if (isChecked) {
+      if (!selectedDonorIds.includes(id)) {
+        selectedDonorIds.push(id);
+      }
+      if (!recipientCustomData[id]) {
+        const item = findRecord(id);
+        if (item) recipientCustomData[id] = makeCustom(item);
+      }
+    } else {
+      selectedDonorIds = selectedDonorIds.filter(itemid => itemid !== id);
+      delete recipientCustomData[id];
+    }
+    populateLetterDonorSelect();
+    renderPreviewPanels();
+  }
+
+  function updateSelectedCountBadge() {
+    const badge = document.getElementById('selectedCountBadge');
+    if (badge) badge.innerText = `បានជ្រើសរើស: ${selectedDonorIds.length}`;
+  }
+
+  function editRecipientModal(id) {
+    const item = findRecord(id);
+    if (!item) return;
+    const custom = recipientCustomData[id] || makeCustom(item);
+
+    Swal.fire({
+      title: 'កែប្រែព័ត៌មានលិខិតនេះ',
+      width: 700,
+      html: `
+        <div class="text-start">
+          <div class="row g-2">
+            <div class="col-md-8">
+              <label class="form-label small fw-bold">ឈ្មោះអ្នកទទួល</label>
+              <input type="text" id="swal_name" class="form-control form-control-sm" value="${esc(custom.name)}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">លេខចុះបញ្ជី</label>
+              <input type="text" id="swal_regNo" class="form-control form-control-sm" value="${esc(custom.regNo || defaultRegNoValue())}">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">ថវិកា / សម្ភារៈឧបត្ថម្ភ / ស្នាដៃ</label>
+              <input type="text" id="swal_sponsor" class="form-control form-control-sm" value="${esc(custom.sponsorDetails)}">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">គោលបំណង</label>
+              <input type="text" id="swal_purpose" class="form-control form-control-sm" value="${esc(custom.purpose)}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">ឈ្មោះសាលា</label>
+              <input type="text" id="swal_school" class="form-control form-control-sm" value="${esc(custom.school || defaultSchoolValue())}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">អ្នកចុះហត្ថលេខា</label>
+              <input type="text" id="swal_signatory" class="form-control form-control-sm" value="${esc(custom.signatory || defaultSignatoryValue())}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">កាលបរិច្ឆេទ</label>
+              <input type="date" id="swal_date" class="form-control form-control-sm" value="${esc(custom.date || defaultDateValue())}">
+            </div>
+          </div>
+          <div class="form-text small mt-2">ប្រភេទលិខិត និងរូបភាព (Frame / Background) ប្រើដូចគ្នាលើលិខិតទាំងអស់។ ទុកឱ្យទទេ ដើម្បីប្រើតម្លៃលំនាំដើម។</div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'រក្សាទុក',
+      cancelButtonText: 'បោះបង់',
+      preConfirm: () => {
+        const val = k => document.getElementById(k).value.trim();
+        const school = val('swal_school');
+        const signatory = val('swal_signatory');
+        const date = document.getElementById('swal_date').value;
+        const regNo = val('swal_regNo');
+        return {
+          name: val('swal_name'),
+          sponsorDetails: val('swal_sponsor'),
+          purpose: val('swal_purpose'),
+          regNo: (!item.regNo && regNo === defaultRegNoValue()) ? '' : regNo,
+          school: school === defaultSchoolValue() ? '' : school,
+          signatory: signatory === defaultSignatoryValue() ? '' : signatory,
+          date: date === defaultDateValue() ? '' : date,
+          _auto: false
+        };
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        recipientCustomData[id] = result.value;
+        populateLetterDonorSelect();
+        renderPreviewPanels();
+      }
+    });
+  }
+
+  function renderPreviewPanels() {
+    const container = document.getElementById('previewPanelsContainer');
+    const badge = document.getElementById('previewCountBadge');
+    if (!container) return;
+
+    if (badge) badge.innerText = `${selectedDonorIds.length} លិខិត`;
+
+    if (selectedDonorIds.length === 0) {
+      container.innerHTML = `
+        <div class="text-muted text-center py-5">
+          <i class="fa-solid fa-certificate fa-3x mb-2 text-secondary"></i>
+          <p>មិនទាន់មានលិខិតសម្រាប់បង្ហាញឡើយ សូមជ្រើសរើសសប្បុរសជន</p>
+        </div>
+      `;
+      return;
+    }
+
+    const defaultRegNo = defaultRegNoValue();
+    const contentType = currentContentType();
+    const preset = contentPresets[contentType] || contentPresets['appreciation'];
+
+    let html = '';
+    selectedDonorIds.forEach((id, index) => {
+      const item = findRecord(id);
+      if (!item) return;
+      const custom = recipientCustomData[id] || makeCustom(item);
+
+      const currentRegNo = custom.regNo || defaultRegNo;
+      const schoolName = custom.school || defaultSchoolValue();
+      const signatory = custom.signatory || defaultSignatoryValue();
+      const dates = formatLetterDates(custom.date || defaultDateValue(), schoolName);
+
+      const customFrameClass = customFrameImageSrc ? 'custom-frame' : '';
+
+      const centerBgHTML = centerBgImageSrc ? `<img src="${centerBgImageSrc}" class="center-bg-image" style="display: block;">` : '';
+      const bottomBgHTML = bottomBgImageSrc ? `<img src="${bottomBgImageSrc}" class="bottom-bg-image" style="display: block;">` : '';
+      const customFrameHTML = customFrameImageSrc ? `<img src="${customFrameImageSrc}" class="custom-frame-img" style="display: block;">` : '';
+
+      const bodyHTML = preset.contentTemplate({
+        sponsorDetails: esc(custom.sponsorDetails),
+        school: esc(schoolName),
+        purpose: esc(custom.purpose)
+      });
+
+      html += `
+        <div class="border rounded p-2 bg-white shadow-sm w-100 d-flex flex-column align-items-center position-relative">
+          <div class="d-flex justify-content-between w-100 mb-1 px-2 no-print" style="font-size: 12px;">
+            <span class="fw-bold text-primary">លិខិតទី ${index + 1}: ${esc(custom.name)} (លេខចុះបញ្ជី៖ <span class="preview-regno-text" data-donor-id="${id}">${esc(currentRegNo)}</span>)</span>
+            <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editRecipientModal('${id}')"><i class="fa-solid fa-pen"></i> កែប្រែ</button>
+          </div>
+
+          <div class="preview-wrapper" style="width: 100%; overflow-x: auto; display: flex; justify-content: center;">
+            <div class="certificate-box ${customFrameClass}" id="certBox_${id}" style="transform: scale(0.28); transform-origin: top center; margin-bottom: -151mm; margin-top: -5mm;">
+              <div class="default-frame-outer">
+                <div class="default-frame-middle">
+                  <div class="inner-content has-default-border">
+
+                    ${centerBgHTML}
+                    ${bottomBgHTML}
+                    ${customFrameHTML}
+
+                    <div class="content-layer">
+                      <div class="header-country">
+                        ព្រះរាជាណាចក្រកម្ពុជា<br>
+                        <span class="header-country-sub">ជាតិ សាសនា ព្រះមហាក្សត្រ</span>
+                      </div>
+
+                      <div>
+                        <div class="cert-title">${preset.title}</div>
+                        <div class="cert-subtitle">សាលាបឋមសិក្សា<span>${esc(schoolName)}</span></div>
+                        <div class="cert-action">${preset.action}</div>
+                      </div>
+
+                      <div class="cert-name">${esc(custom.name)}</div>
+
+                      <div class="cert-content">
+                        ${bodyHTML}
+                      </div>
+
+                      <div class="cert-footer">
+                        <div class="footer-left">
+                          ចុះបញ្ជីលេខ៖ <span class="preview-regno-text" data-donor-id="${id}">${esc(currentRegNo)}</span> យ.ដ.វ
+                        </div>
+
+                        <div class="footer-right">
+                          <div>${esc(dates.lunar)}</div>
+                          <div>${esc(dates.solar)}</div>
+                          <div class="signatory-name-main" style="margin-top: 4px;">នាយកសាលា</div>
+                          <div class="signature-space"></div>
+                          <div class="signatory-name">${esc(signatory)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function updateAllLetterPreviews() {
+    const newRegNo = document.getElementById('inRegNo') ? document.getElementById('inRegNo').value : '';
+
+    document.querySelectorAll('.preview-regno-text').forEach(el => {
+        const donorId = el.getAttribute('data-donor-id');
+        if (donorId && (!recipientCustomData[donorId] || !recipientCustomData[donorId].regNo)) {
+            el.textContent = newRegNo || '.......';
+        }
+    });
+
+    renderPreviewPanels();
+  }
+
+  const FIELD_LABELS = {
+    name: 'ឈ្មោះ', sponsorDetails: 'ឧបត្ថម្ភ (អត្ថបទ)', amountRiel: 'រៀល', amountUsd: 'ដុល្លារ',
+    itemName: 'សម្ភារ', itemQty: 'ចំនួនសម្ភារ', itemUnit: 'ខ្នាត', purpose: 'គោលបំណង',
+    regNo: 'លេខចុះបញ្ជី', date: 'កាលបរិច្ឆេទ', phone: 'ទូរស័ព្ទ', note: 'កំណត់សម្គាល់',
+    gender: 'ភេទ', seq: 'ល.រ'
+  };
+
+  const FIELD_ALIASES = {
+    itemName: ['itemname', 'item', 'ឈ្មោះសម្ភារ', 'ឈ្មោះសម្ភារៈ', 'សម្ភារ', 'សម្ភារៈ'],
+    itemQty: ['itemqty', 'qty', 'quantity', 'ចំនួនសម្ភារ', 'ចំនួនសម្ភារៈ', 'បរិមាណ'],
+    itemUnit: ['itemunit', 'unit', 'ខ្នាត', 'ឯកតា'],
+    amountRiel: ['amountriel', 'riel', 'khr', 'ចំនួនរៀល', 'ចំនួនប្រាក់រៀល', 'ចំនួនទឹកប្រាក់រៀល', 'ថវិការៀល', 'ប្រាក់រៀល', 'រៀល'],
+    amountUsd: ['amountusd', 'usd', 'dollar', 'ចំនួនដុល្លារ', 'ចំនួនប្រាក់ដុល្លារ', 'ចំនួនទឹកប្រាក់ដុល្លារ', 'ថវិកាដុល្លារ', 'ប្រាក់ដុល្លារ', 'ដុល្លារ'],
+    sponsorDetails: ['sponsordetails', 'sponsor', 'details', 'description', 'ថវិកាសម្ភារឧបត្ថម្ភ', 'ថវិកាសម្ភារៈឧបត្ថម្ភ', 'ឧបត្ថម្ភ', 'ស្នាដៃ', 'ការពិពណ៌នា', 'ការចូលរួម', 'អត្ថបទ', 'ការបំពេញការងារ', 'ការបំពេញភារកិច្ច'],
+    purpose: ['purpose', 'helptype', 'គោលបំណង', 'ប្រភេទជំនួយ', 'ដើម្បី'],
+    regNo: ['regno', 'registration', 'registrationno', 'លេខចុះបញ្ជី', 'លេខសម្គាល់'],
+    date: ['date', 'កាលបរិច្ឆេទ', 'ថ្ងៃខែឆ្នាំ', 'ថ្ងៃខែ'],
+    phone: ['phone', 'tel', 'telephone', 'ទូរស័ព្ទ', 'លេខទូរស័ព្ទ'],
+    note: ['note', 'notes', 'remark', 'remarks', 'កំណត់សម្គាល់', 'សម្គាល់'],
+    name: ['name', 'donor', 'donorname', 'sponsorname', 'recipient', 'fullname', 'ឈ្មោះ', 'ឈ្មោះសប្បុរសជន', 'ឈ្មោះអ្នកឧបត្ថម្ភ', 'ឈ្មោះអ្នកទទួល', 'អ្នកឧបត្ថម្ភ', 'សប្បុរសជន', 'គោត្តនាមនិងនាម'],
+    gender: ['gender', 'sex', 'ភេទ'],
+    seq: ['no', 'seq', 'number', 'ល.រ', 'លេខរៀង']
+  };
+  const FIELD_ORDER = ['itemName', 'itemQty', 'itemUnit', 'amountRiel', 'amountUsd', 'sponsorDetails', 'purpose', 'regNo', 'date', 'phone', 'note', 'gender', 'seq', 'name'];
+
+  function normHeader(s) {
+    return String(s == null ? '' : s)
+      .toLowerCase()
+      .replace(/[\u200B-\u200D\uFEFF\u17C8]/g, '')
+      .replace(/[\s_\-\/\\()\[\]{}:;,.\u00B7\u2022\u17D4\u17D6*]+/g, '');
+  }
+
+  const ALIAS_NORM = {};
+  Object.keys(FIELD_ALIASES).forEach(f => { ALIAS_NORM[f] = FIELD_ALIASES[f].map(normHeader); });
+
+  function matchField(h) {
+    if (!h) return null;
+    for (const f of FIELD_ORDER) if (ALIAS_NORM[f].includes(h)) return f;
+    let best = null, bestLen = 0;
+    for (const f of FIELD_ORDER) {
+      for (const a of ALIAS_NORM[f]) {
+        if (a.length >= 6 && h.includes(a) && a.length > bestLen) { best = f; bestLen = a.length; }
+      }
+    }
+    return best;
+  }
+
+  function detectHeader(rows) {
+    let best = null;
+    for (let r = 0; r < Math.min(rows.length, 10); r++) {
+      const row = rows[r] || [];
+      const map = {};
+      row.forEach((cell, c) => {
+        const f = matchField(normHeader(cell));
+        if (f && map[f] === undefined) map[f] = c;
+      });
+      const score = Object.keys(map).length;
+      if (map.name !== undefined && (!best || score > best.score)) best = { headerRow: r, map, score };
+    }
+    return best;
+  }
+
+  const KH_DIGITS = { '០': '0', '១': '1', '២': '2', '៣': '3', '៤': '4', '៥': '5', '៦': '6', '៧': '7', '៨': '8', '៩': '9' };
+  function parseAmount(v) {
+    if (v === '' || v == null) return 0;
+    const s = String(v).replace(/[០-៩]/g, d => KH_DIGITS[d]).replace(/[^0-9.\-]/g, '');
+    const n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+
+  function sheetToRecords(rows, type, sheetName) {
+    const det = detectHeader(rows || []);
+    if (!det) return { records: [], fields: [], error: 'no-name' };
+
+    const records = [];
+    for (let r = det.headerRow + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const get = f => (det.map[f] === undefined || row[det.map[f]] == null) ? '' : String(row[det.map[f]]).trim();
+      const name = get('name');
+      if (!name) continue;
+
+      const amountRiel = parseAmount(get('amountRiel'));
+      const amountUsd = parseAmount(get('amountUsd'));
+      const itemName = get('itemName');
+      const hasCash = amountRiel > 0 || amountUsd > 0;
+
+      records.push({
+        id: '',
+        date: get('date'),
+        name: name,
+        source: 'នាំចូល',
+        helpTypeFromSheet: get('purpose'),
+        type: hasCash ? (itemName ? 'ទាំងពីរ' : 'សាច់ប្រាក់') : (itemName ? 'សម្ភារ' : ''),
+        amountRiel: amountRiel || '',
+        amountUsd: amountUsd || '',
+        itemName: itemName,
+        itemQty: get('itemQty'),
+        itemUnit: get('itemUnit'),
+        phone: get('phone'),
+        note: get('note'),
+        regNo: get('regNo'),
+        sponsorText: get('sponsorDetails'),
+        gender: get('gender'),
+        seq: get('seq'),
+        _imported: true,
+        _type: type,
+        _row: r + 1,
+        _sheet: sheetName
+      });
+    }
+    const fields = Object.keys(det.map).sort((a, b) => det.map[a] - det.map[b]);
+    return { records, fields, error: '' };
+  }
+
+  function guessType(sheetName, onlyOne) {
+    const keys = Object.keys(contentPresets);
+    for (const t of keys) if (t !== 'appreciation' && contentPresets[t].sheetHint.test(sheetName)) return t;
+    const cur = currentContentType();
+    return (onlyOne && cur !== 'appreciation') ? cur : '';
+  }
+
+  function loadPendingFromSheets(sheetMap, sourceLabel) {
+    const names = Object.keys(sheetMap);
+    pendingSourceLabel = sourceLabel;
+    pendingSheets = names.map(n => {
+      const info = sheetToRecords(sheetMap[n], '', n);
+      return {
+        name: n,
+        rows: sheetMap[n],
+        type: info.error ? '' : guessType(n, names.length === 1),
+        count: info.records.length,
+        fields: info.fields,
+        error: info.error
+      };
+    });
+    renderPendingTable();
+  }
+
+  function renderPendingTable() {
+    const box = document.getElementById('pendingSheetsBox');
+    if (!box) return;
+    if (!pendingSheets.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    const typeOptions = i => '<option value="">— មិននាំចូល —</option>' + Object.keys(contentPresets).filter(t => t !== 'appreciation').map(t =>
+      `<option value="${t}" ${pendingSheets[i].type === t ? 'selected' : ''}>${esc(contentPresets[t].title)}</option>`).join('');
+
+    const rowsHtml = pendingSheets.map((p, i) => {
+      const cols = p.error
+        ? '<span class="badge bg-danger field-badge">រកមិនឃើញជួរឈរ “ឈ្មោះ”</span>'
+        : p.fields.map(f => `<span class="badge bg-light text-dark border field-badge">${FIELD_LABELS[f]}</span>`).join('');
+      return `<tr>
+        <td class="fw-bold">${esc(p.name)}</td>
+        <td class="text-center">${p.count}</td>
+        <td>${cols}</td>
+        <td><select class="form-select form-select-sm" onchange="setPendingType(${i}, this.value)" ${p.error ? 'disabled' : ''}>${typeOptions(i)}</select></td>
+      </tr>`;
+    }).join('');
+
+    const ready = pendingSheets.some(p => p.type && !p.error && p.count > 0);
+    box.innerHTML = `
+      <div class="border rounded p-2 bg-light">
+        <div class="small fw-bold mb-2"><i class="fa-solid fa-table-list me-1"></i> ប្រភព៖ ${esc(pendingSourceLabel)} — រកឃើញ ${pendingSheets.length} Sheet សូមជ្រើសប្រភេទលិខិតឱ្យ Sheet នីមួយៗ</div>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered bg-white mb-2 sheet-map-table">
+            <thead class="table-light"><tr><th>ឈ្មោះ Sheet</th><th class="text-center">ចំនួនជួរ</th><th>ជួរឈរដែលស្គាល់</th><th>ប្រភេទលិខិត</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary btn-sm" onclick="applyImport()" ${ready ? '' : 'disabled'}><i class="fa-solid fa-check me-1"></i> នាំចូលទិន្នន័យ</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cancelPending()">បោះបង់</button>
+        </div>
+      </div>`;
+    box.style.display = 'block';
+  }
+
+  function setPendingType(i, v) {
+    if (pendingSheets[i]) pendingSheets[i].type = v;
+    renderPendingTable();
+  }
+
+  function cancelPending() {
+    pendingSheets = [];
+    const inp = document.getElementById('importFile'); if (inp) inp.value = '';
+    const nm = document.getElementById('importFileName');
+    if (nm) { nm.innerText = 'ជ្រើសរើសឯកសារ Excel / CSV (.xlsx .xls .csv)...'; nm.style.color = '#64748b'; nm.style.fontWeight = 'normal'; }
+    renderPendingTable();
+  }
+
+  function applyImport() {
+    const perType = {};
+    pendingSheets.forEach(p => {
+      if (!p.type || p.error || !p.count) return;
+      const res = sheetToRecords(p.rows, p.type, p.name);
+      res.records.forEach(r => { r.id = `sheet_${p.type}_${r._row}`; });
+      const bucket = perType[p.type] || (perType[p.type] = { records: [], sheets: [] });
+      bucket.records = bucket.records.concat(res.records);
+      bucket.sheets.push(p.name);
+    });
+
+    const touched = Object.keys(perType);
+    if (!touched.length) {
+      Swal.fire({ icon: 'warning', title: 'មិនមានអ្វីត្រូវនាំចូល', text: 'សូមជ្រើសប្រភេទលិខិតឱ្យ Sheet យ៉ាងតិចមួយ ដែលមានជួរឈរ “ឈ្មោះ”។' });
+      return;
+    }
+
+    const sheetsToPersist = pendingSheets.filter(p => p.type && !p.error && p.count);
+
+    touched.forEach(t => {
+      importedRecords[t] = perType[t].records;
+      importedMeta[t] = perType[t].sheets;
+    });
+
+    const sel = document.getElementById('contentTypeSelect');
+    const cur = currentContentType();
+    const target = perType[cur] ? cur : ((importedRecords[cur] || []).length ? cur : touched[0]);
+    if (perType[target]) selectedDonorIds = [];
+    sel.value = target;
+
+    const lines = touched.map(t => `<li>${esc(contentPresets[t].title)} ៖ <b>${perType[t].records.length}</b> ជួរ (${esc(perType[t].sheets.join(', '))})</li>`).join('');
+    cancelPending();
+    changeContentPreset(target);
+
+    Swal.fire({ icon: 'success', title: 'នាំចូលជោគជ័យ', html: `<ul class="text-start small mb-0">${lines}</ul>`, confirmButtonText: 'យល់ព្រម' });
+
+    persistImportedSheetsToGoogleSheet(sheetsToPersist);
+  }
+
+  async function persistImportedSheetsToGoogleSheet(sheetsToPersist) {
+    if (!hasGoogleRun() || !sheetsToPersist || !sheetsToPersist.length) return;
+    const results = [];
+    for (const p of sheetsToPersist) {
+      const destSheet = contentPresets[p.type].title;
+      try {
+        await gsCall('saveContentSheetRows', destSheet, p.rows, 'replace');
+        await pullLetterSheet(p.type, { force: true, keepIfEmpty: true });
+        results.push(`✔ ${esc(destSheet)}`);
+      } catch (err) {
+        results.push(`✖ ${esc(destSheet)}: ${esc((err && err.message) || err)}`);
+      }
+    }
+    Swal.fire({
+      icon: 'info', title: 'ស្ថានភាពការរក្សាទុកទៅ Google Sheet',
+      html: '<div class="small text-start mb-0">' + results.join('<br>') + '</div>',
+      confirmButtonText: 'យល់ព្រម'
+    });
+  }
+
+  function handleImportFile(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    if (typeof XLSX === 'undefined') {
+      Swal.fire({ icon: 'error', title: 'មិនអាចអានឯកសារបាន', text: 'បណ្ណាល័យ SheetJS មិនទាន់ផ្ទុក។ សូមពិនិត្យអ៊ីនធឺណិត ហើយផ្ទុកទំព័រឡើងវិញ។' });
+      input.value = '';
+      return;
+    }
+
+    const nm = document.getElementById('importFileName');
+    if (nm) { nm.innerText = file.name; nm.style.color = '#0f172a'; nm.style.fontWeight = '600'; }
+
+    const isCsv = /\.csv$/i.test(file.name);
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const wb = XLSX.read(e.target.result, { type: isCsv ? 'string' : 'array' });
+        const map = {};
+        wb.SheetNames.forEach(n => {
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: false, blankrows: false });
+          const key = isCsv ? file.name.replace(/\.csv$/i, '') : n;
+          map[key] = rows;
+        });
+        loadPendingFromSheets(map, file.name);
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'អានឯកសារមិនបាន', text: (err && err.message) || String(err) });
+      }
+    };
+    reader.onerror = function () {
+      Swal.fire({ icon: 'error', title: 'អានឯកសារមិនបាន', text: 'សូមសាកល្បងឯកសារផ្សេង។' });
+    };
+    if (isCsv) reader.readAsText(file, 'UTF-8'); else reader.readAsArrayBuffer(file);
+  }
+
+  function hasGoogleRun() {
+    return typeof google !== 'undefined' && google.script && google.script.run;
+  }
+
+  function gsCall(fn) {
+    const args = Array.prototype.slice.call(arguments, 1);
+    return new Promise((resolve, reject) => {
+      if (!hasGoogleRun()) { reject(new Error('មិនមានការតភ្ជាប់ទៅ Google Apps Script (Demo Mode)')); return; }
+      args.push(sessionToken);
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null, args);
+    });
+  }
+
+  async function pullFromGoogleSheets() {
+    Swal.fire({ title: 'កំពុងទាញទិន្នន័យពី Google Sheet...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+      const names = await gsCall('getContentSheetNames');
+      if (!Array.isArray(names) || !names.length) throw new Error('រកមិនឃើញ Sheet លិខិត (ឈ្មោះ Sheet ត្រូវចាប់ផ្តើមដោយ “លិខិត”)');
+      const map = {};
+      for (const n of names) map[n] = await gsCall('getSheetRows', n);
+      Swal.close();
+      loadPendingFromSheets(map, 'Google Sheet');
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'ទាញទិន្នន័យមិនបាន',
+        html: 'សូមបន្ថែមអនុគមន៍ <code>getContentSheetNames</code> និង <code>getSheetRows</code> ក្នុង Apps Script (មើលឯកសារ Code-sheets.gs)<br><small class="text-muted">' + esc((err && err.message) || err) + '</small>'
+      });
+    }
+  }
+
+  function downloadImportTemplate() {
+    if (typeof XLSX === 'undefined') {
+      Swal.fire({ icon: 'error', title: 'មិនអាចបង្កើតឯកសារបាន', text: 'បណ្ណាល័យ SheetJS មិនទាន់ផ្ទុក។ សូមពិនិត្យអ៊ីនធឺណិត។' });
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const colWidths = [{ wch: 6 }, { wch: 26 }, { wch: 12 }, { wch: 46 }, { wch: 28 }, { wch: 14 }];
+
+    const commendation = contentPresets.commendation;
+    if (commendation) {
+      const header = ['ល.រ', 'គោត្តនាមនិងនាម', 'ភេទ', 'ការបំពេញការងារ', 'គោលបំណង', 'លេខចុះបញ្ជី'];
+      const sample = [1, 'ឈ្មោះអ្នកទទួលបាន', 'ប្រុស/ស្រី', commendation.sponsorDetails, commendation.purpose, commendation.regNo];
+      const ws = XLSX.utils.aoa_to_sheet([header, sample]);
+      ws['!cols'] = colWidths;
+      XLSX.utils.book_append_sheet(wb, ws, commendation.title);
+    }
+
+    const honor = contentPresets.honor;
+    if (honor) {
+      const header = ['ល.រ', 'គោត្តនាមនិងនាម', 'ភេទ', 'ការបំពេញភារកិច្ច', 'គោលបំណង', 'លេខចុះបញ្ជី'];
+      const sample = [1, 'ឈ្មោះអ្នកទទួលបាន', 'ប្រុស/ស្រី', honor.sponsorDetails, honor.purpose, honor.regNo];
+      const ws = XLSX.utils.aoa_to_sheet([header, sample]);
+      ws['!cols'] = colWidths;
+      XLSX.utils.book_append_sheet(wb, ws, honor.title);
+    }
+
+    XLSX.writeFile(wb, 'គំរូនាំចូលលិខិត.xlsx');
+  }
+
+  function addSampleRecord() {
+    const type = currentContentType();
+    const p = contentPresets[type];
+    if ((sampleRecords[type] || []).length) {
+      Swal.fire({ icon: 'info', title: 'មានទិន្នន័យគំរូរួចហើយ', timer: 1400, showConfirmButton: false });
+      return;
+    }
+    sampleRecords[type].push({
+      id: `sample_${type}`, date: '', name: p.donorName, source: 'គំរូ',
+      helpTypeFromSheet: p.purpose, type: '', amountRiel: '', amountUsd: '', itemName: '', itemQty: '', itemUnit: '',
+      phone: '', note: '', regNo: p.regNo, sponsorText: p.sponsorDetails,
+      _imported: true, _sample: true, _type: type, _sheet: '(ទិន្នន័យគំរូ)'
+    });
+    syncSourceUI();
+    populateLetterDonorSelect();
+    updateAllLetterPreviews();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btnPullGSheet');
+    if (btn && !hasGoogleRun()) {
+      btn.disabled = true;
+      btn.title = 'ប្រើបានតែពេលដំណើរការក្នុង Google Apps Script';
+    }
+    syncSourceUI();
+    pullLetterSheet(currentContentType());
+  });
+
+  let sidebarCollapsed = false;
+
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    applySidebarState();
+    try { localStorage.setItem('sidebar_collapsed', sidebarCollapsed ? '1' : '0'); } catch (e) {}
+  }
+
+  function applySidebarState() {
+    const sidebar = document.getElementById('app-sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const icon = document.getElementById('sidebar-toggle-icon');
+    if (!sidebar || !mainContent) return;
+
+    sidebar.classList.toggle('sidebar-collapsed', sidebarCollapsed);
+    mainContent.classList.toggle('main-content-expanded', sidebarCollapsed);
+
+    if (icon) {
+      icon.classList.toggle('fa-angles-left', !sidebarCollapsed);
+      icon.classList.toggle('fa-angles-right', sidebarCollapsed);
+    }
+  }
+
+  function restoreSidebarState() {
+    try {
+      const saved = localStorage.getItem('sidebar_collapsed');
+      sidebarCollapsed = (saved === '1');
+    } catch (e) {
+      sidebarCollapsed = false;
+    }
+    applySidebarState();
+  }
+
+  function goToLetterForDonor(id) {
+    if (!currentUser || currentUser.role !== 'Admin') return;
+    syncSourceUI();
+    switchTab('letter');
+    populateLetterDonorSelect();
+    const chk = document.getElementById(`donor_chk_${id}`);
+    if (chk && !chk.checked) {
+      chk.checked = true;
+      handleDonorCheckboxChange(id, true);
+    }
+  }
+</script>
+</body>
+</html>
